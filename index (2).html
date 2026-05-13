@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lean Principles — Cours Interactif</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:   #0B1929;
+  --navy2:  #122035;
+  --blue:   #1A6FD4;
+  --blue2:  #2280F0;
+  --cyan:   #00C8E0;
+  --gold:   #F5A623;
+  --green:  #1DB87A;
+  --red:    #E84855;
+  --white:  #F2F4F8;
+  --grey:   #8A9BB5;
+  --grey2:  #2A3A52;
+  --radius: 12px;
+  --sidebar-w: 240px;
+  --header-h: 64px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--navy);
+  color: var(--white);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── NOISE OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+/* ── LAYOUT ── */
+.app { display: flex; height: 100vh; position: relative; z-index: 1; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  background: var(--navy2);
+  border-right: 1px solid rgba(255,255,255,0.07);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.sidebar-logo {
+  padding: 1.5rem 1.25rem 1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.sidebar-logo .brand {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+.sidebar-logo .subtitle {
+  font-size: 11px;
+  color: var(--grey);
+  margin-top: 2px;
+  letter-spacing: 0.03em;
+}
+
+.sidebar-progress-wrap {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.progress-label {
+  font-size: 11px;
+  color: var(--grey);
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.progress-track {
+  height: 4px;
+  background: var(--grey2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--blue), var(--cyan));
+  border-radius: 99px;
+  transition: width 0.5s cubic-bezier(.4,0,.2,1);
+}
+
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 0.75rem 0; }
+.sidebar-nav::-webkit-scrollbar { width: 4px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: var(--grey2); border-radius: 99px; }
+
+.nav-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--grey);
+  padding: 0.5rem 1.25rem 0.25rem;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.6rem 1.25rem;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: all 0.15s;
+  position: relative;
+}
+.nav-item:hover { background: rgba(255,255,255,0.04); }
+.nav-item.active {
+  background: rgba(26,111,212,0.15);
+  border-left-color: var(--cyan);
+}
+.nav-item.done .nav-dot { background: var(--green); }
+.nav-item.active .nav-dot { background: var(--cyan); box-shadow: 0 0 8px rgba(0,200,224,0.6); }
+
+.nav-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--grey2);
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.nav-text { flex: 1; }
+.nav-text .nav-title {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: rgba(242,244,248,0.85);
+}
+.nav-item.active .nav-title { color: var(--white); font-weight: 600; }
+.nav-text .nav-time {
+  font-size: 10px;
+  color: var(--grey);
+  margin-top: 1px;
+}
+
+.sidebar-footer {
+  padding: 1rem 1.25rem;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  font-size: 11px;
+  color: var(--grey);
+}
+.sidebar-footer span { color: var(--gold); font-weight: 500; }
+
+/* ── MAIN CONTENT ── */
+.main {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.main::-webkit-scrollbar { width: 6px; }
+.main::-webkit-scrollbar-thumb { background: var(--grey2); border-radius: 99px; }
+
+/* ── TOPBAR ── */
+.topbar {
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  background: rgba(11,25,41,0.8);
+  backdrop-filter: blur(12px);
+  position: sticky; top: 0; z-index: 10;
+  flex-shrink: 0;
+}
+.topbar-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--white);
+}
+.topbar-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 99px;
+  border: 1px solid rgba(255,255,255,0.12);
+  color: var(--grey);
+  background: rgba(255,255,255,0.04);
+}
+.badge.active-b { border-color: var(--cyan); color: var(--cyan); background: rgba(0,200,224,0.1); }
+
+/* ── PAGE CONTENT ── */
+.page { display: none; padding: 2rem; max-width: 860px; width: 100%; animation: fadeIn 0.3s ease; }
+.page.active { display: block; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── MODULE HEADER ── */
+.mod-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.mod-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 6px;
+}
+.mod-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--white);
+  margin-bottom: 8px;
+}
+.mod-desc { font-size: 14px; color: var(--grey); line-height: 1.7; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--navy2);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+}
+.card-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--white);
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-title .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--cyan);
+  flex-shrink: 0;
+}
+.card p { font-size: 13.5px; color: rgba(242,244,248,0.75); line-height: 1.75; }
+
+/* ── GRID ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
+@media (max-width: 640px) {
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+}
+
+/* ── HIGHLIGHT BOXES ── */
+.hbox {
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+  border-left: 3px solid transparent;
+}
+.hbox.blue  { background: rgba(26,111,212,0.12);  border-left-color: var(--blue2); }
+.hbox.green { background: rgba(29,184,122,0.12);  border-left-color: var(--green); }
+.hbox.gold  { background: rgba(245,166,35,0.12);  border-left-color: var(--gold); }
+.hbox.red   { background: rgba(232,72,85,0.12);   border-left-color: var(--red); }
+.hbox.cyan  { background: rgba(0,200,224,0.1);    border-left-color: var(--cyan); }
+.hbox-title { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; margin-bottom: 4px; }
+.hbox.blue  .hbox-title { color: var(--blue2); }
+.hbox.green .hbox-title { color: var(--green); }
+.hbox.gold  .hbox-title { color: var(--gold); }
+.hbox.red   .hbox-title { color: var(--red); }
+.hbox.cyan  .hbox-title { color: var(--cyan); }
+.hbox p { font-size: 13px; color: rgba(242,244,248,0.7); line-height: 1.65; }
+
+/* ── STAT ROW ── */
+.stat-row { display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.stat-card {
+  flex: 1; min-width: 90px;
+  background: var(--navy2);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: var(--radius);
+  padding: 1rem;
+  text-align: center;
+}
+.stat-val { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; margin-bottom: 2px; }
+.stat-lbl { font-size: 11px; color: var(--grey); }
+.sv-cyan  { color: var(--cyan); }
+.sv-green { color: var(--green); }
+.sv-gold  { color: var(--gold); }
+.sv-red   { color: var(--red); }
+
+/* ── STEP FLOW ── */
+.step-flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0.75rem 0; }
+.step-box {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.05);
+  color: var(--white);
+  text-align: center;
+}
+.step-box.c { background: rgba(0,200,224,0.15); border-color: rgba(0,200,224,0.4); color: var(--cyan); }
+.step-box.g { background: rgba(29,184,122,0.15); border-color: rgba(29,184,122,0.4); color: var(--green); }
+.step-box.o { background: rgba(245,166,35,0.15); border-color: rgba(245,166,35,0.4); color: var(--gold); }
+.step-box.r { background: rgba(232,72,85,0.15); border-color: rgba(232,72,85,0.4); color: var(--red); }
+.step-arrow { color: var(--grey); font-size: 14px; }
+
+/* ── VALUE BARS ── */
+.vbar-wrap { margin-bottom: 1rem; }
+.vbar-label { font-size: 12px; color: var(--grey); display: flex; justify-content: space-between; margin-bottom: 5px; }
+.vbar-track { height: 32px; display: flex; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.07); }
+.vb-va    { background: rgba(29,184,122,0.3); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: var(--green); letter-spacing: 0.05em; transition: width 0.5s ease; }
+.vb-nva   { background: rgba(245,166,35,0.25); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: var(--gold); letter-spacing: 0.05em; transition: width 0.5s ease; }
+.vb-waste { background: rgba(232,72,85,0.25); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: var(--red); letter-spacing: 0.05em; transition: width 0.5s ease; }
+
+/* ── LEGEND ── */
+.legend { display: flex; gap: 12px; flex-wrap: wrap; margin: 0.5rem 0; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--grey); }
+.legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+/* ── SLIDER ── */
+.slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 0.5rem; }
+.slider-row label { font-size: 12px; color: var(--grey); width: 50px; flex-shrink: 0; }
+.slider-row input[type=range] {
+  flex: 1;
+  -webkit-appearance: none;
+  height: 4px;
+  background: var(--grey2);
+  border-radius: 99px;
+  outline: none;
+  cursor: pointer;
+}
+.slider-row input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--cyan);
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(0,200,224,0.5);
+}
+.slider-val { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--white); width: 36px; text-align: right; }
+
+/* ── WASTE GRID ── */
+.waste-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+.waste-card {
+  background: var(--navy2);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: var(--radius);
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.waste-card:hover { border-color: rgba(0,200,224,0.4); background: rgba(0,200,224,0.06); transform: translateY(-2px); }
+.waste-card.selected { border-color: var(--cyan); background: rgba(0,200,224,0.12); box-shadow: 0 0 16px rgba(0,200,224,0.15); }
+.waste-icon { font-size: 26px; margin-bottom: 6px; }
+.waste-name { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; color: var(--white); }
+.waste-detail { font-size: 11px; color: var(--grey); margin-top: 8px; line-height: 1.55; display: none; text-align: left; }
+.waste-card.selected .waste-detail { display: block; }
+
+/* ── TABLE ── */
+.lean-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.lean-table th {
+  text-align: left; padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  font-family: 'Syne', sans-serif;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--grey);
+}
+.lean-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); color: rgba(242,244,248,0.8); }
+.lean-table tr:last-child td { border-bottom: none; }
+.lean-table tr:hover td { background: rgba(255,255,255,0.02); }
+.lean-table .highlight-cell { color: var(--cyan); font-weight: 500; }
+
+/* ── VS COMPARE ── */
+.vs-row { display: flex; gap: 0; margin-bottom: 0.75rem; border-radius: var(--radius); overflow: hidden; border: 1px solid rgba(255,255,255,0.07); }
+.vs-left  { flex: 1; background: rgba(26,111,212,0.1); padding: 1rem; }
+.vs-right { flex: 1; background: rgba(29,184,122,0.1); padding: 1rem; border-left: 1px solid rgba(255,255,255,0.07); }
+.vs-head  { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+.vs-left  .vs-head { color: var(--blue2); }
+.vs-right .vs-head { color: var(--green); }
+.vs-body  { font-size: 12px; color: rgba(242,244,248,0.65); line-height: 1.6; }
+
+/* ── TIMELINE ── */
+.timeline { border-left: 2px solid var(--grey2); padding-left: 1.25rem; margin-left: 0.5rem; }
+.tl-item { position: relative; padding-bottom: 1rem; }
+.tl-item::before {
+  content: '';
+  position: absolute; left: -1.5rem; top: 4px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--cyan);
+  border: 2px solid var(--navy2);
+  box-shadow: 0 0 6px rgba(0,200,224,0.5);
+}
+.tl-item:last-child { padding-bottom: 0; }
+.tl-label { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; color: var(--cyan); margin-bottom: 2px; }
+.tl-text  { font-size: 13px; color: var(--grey); }
+
+/* ── QUIZ ── */
+.quiz-block { margin-bottom: 1.25rem; }
+.quiz-num { font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 800; letter-spacing: 0.1em; color: var(--cyan); margin-bottom: 4px; }
+.quiz-q { font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 0.75rem; line-height: 1.5; }
+.quiz-opts { display: flex; flex-direction: column; gap: 6px; }
+.quiz-opt {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
+  cursor: pointer;
+  font-size: 13px;
+  color: rgba(242,244,248,0.8);
+  text-align: left;
+  transition: all 0.15s;
+  font-family: 'DM Sans', sans-serif;
+}
+.quiz-opt:hover:not(:disabled) { border-color: rgba(0,200,224,0.4); background: rgba(0,200,224,0.07); color: var(--white); }
+.quiz-opt.correct { background: rgba(29,184,122,0.2); border-color: var(--green); color: var(--green); }
+.quiz-opt.wrong   { background: rgba(232,72,85,0.2); border-color: var(--red); color: var(--red); }
+.quiz-feedback {
+  font-size: 12px; padding: 8px 12px; border-radius: 8px; margin-top: 6px;
+  display: none; line-height: 1.5;
+}
+.quiz-feedback.show { display: block; }
+.quiz-feedback.ok { background: rgba(29,184,122,0.15); color: var(--green); border: 1px solid rgba(29,184,122,0.3); }
+.quiz-feedback.ko { background: rgba(232,72,85,0.15); color: var(--red); border: 1px solid rgba(232,72,85,0.3); }
+
+/* ── SCORE CARD ── */
+.score-card {
+  display: none;
+  background: linear-gradient(135deg, rgba(0,200,224,0.1), rgba(26,111,212,0.1));
+  border: 1px solid rgba(0,200,224,0.3);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  text-align: center;
+  margin-top: 1.5rem;
+}
+.score-card.show { display: block; animation: fadeIn 0.4s ease; }
+.score-big { font-family: 'Syne', sans-serif; font-size: 48px; font-weight: 800; color: var(--cyan); line-height: 1; margin-bottom: 4px; }
+.score-sub { font-size: 14px; color: var(--grey); margin-bottom: 1rem; }
+.score-level { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; margin-bottom: 0.5rem; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s; border: none;
+}
+.btn-outline {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: var(--grey);
+}
+.btn-outline:hover { border-color: rgba(255,255,255,0.3); color: var(--white); }
+.btn-primary {
+  background: var(--blue2);
+  color: var(--white);
+}
+.btn-primary:hover { background: #3090ff; }
+.btn-cyan {
+  background: rgba(0,200,224,0.15);
+  border: 1px solid rgba(0,200,224,0.4);
+  color: var(--cyan);
+}
+.btn-cyan:hover { background: rgba(0,200,224,0.25); }
+.btn:disabled { opacity: 0.35; cursor: default; pointer-events: none; }
+
+/* ── NAV FOOTER ── */
+.nav-footer {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1.5rem 0 0.5rem;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  margin-top: 1rem;
+}
+.nav-counter { font-size: 12px; color: var(--grey); }
+
+/* ── INTRO HERO ── */
+.hero {
+  background: linear-gradient(135deg, rgba(0,200,224,0.08), rgba(26,111,212,0.08));
+  border: 1px solid rgba(0,200,224,0.15);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: 'LEAN';
+  position: absolute; right: -10px; top: -20px;
+  font-family: 'Syne', sans-serif;
+  font-size: 120px; font-weight: 800;
+  color: rgba(0,200,224,0.04);
+  line-height: 1;
+  pointer-events: none;
+}
+.hero-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cyan); margin-bottom: 8px; }
+.hero-title { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; line-height: 1.15; margin-bottom: 10px; }
+.hero-sub { font-size: 14px; color: var(--grey); line-height: 1.7; max-width: 480px; }
+
+/* ── GLOW CHIP ── */
+.chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+  padding: 4px 10px; border-radius: 99px;
+}
+.chip-cyan  { background: rgba(0,200,224,0.15); color: var(--cyan); border: 1px solid rgba(0,200,224,0.3); }
+.chip-green { background: rgba(29,184,122,0.15); color: var(--green); border: 1px solid rgba(29,184,122,0.3); }
+.chip-gold  { background: rgba(245,166,35,0.15); color: var(--gold); border: 1px solid rgba(245,166,35,0.3); }
+.chip-red   { background: rgba(232,72,85,0.15); color: var(--red); border: 1px solid rgba(232,72,85,0.3); }
+
+.chips-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 0.75rem; }
+
+/* ── INTERACTIVE SVG TRIANGLE ── */
+.triangle-wrap { background: rgba(255,255,255,0.02); border-radius: var(--radius); padding: 1rem; text-align: center; }
+
+/* ── EXERCISE BOX ── */
+.exercise-box {
+  background: rgba(245,166,35,0.06);
+  border: 1px solid rgba(245,166,35,0.25);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+}
+.exercise-box .ex-title { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; color: var(--gold); margin-bottom: 6px; letter-spacing: 0.04em; }
+.exercise-box p { font-size: 13px; color: rgba(242,244,248,0.75); line-height: 1.7; }
+
+/* ── SCROLLBAR in main ── */
+.main { scrollbar-width: thin; scrollbar-color: var(--grey2) transparent; }
+
+/* ── MOBILE TOGGLE ── */
+.mobile-toggle {
+  display: none;
+  position: fixed; top: 12px; left: 12px; z-index: 100;
+  background: var(--navy2);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 18px;
+}
+@media (max-width: 640px) {
+  .mobile-toggle { display: block; }
+  .sidebar { position: fixed; left: -260px; top: 0; bottom: 0; z-index: 50; transition: left 0.25s ease; }
+  .sidebar.open { left: 0; }
+  .page { padding: 1rem; padding-top: 4rem; }
+}
+</style>
+</head>
+<body>
+
+<button class="mobile-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+
+<div class="app">
+
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="brand">Lean Academy</div>
+      <div class="subtitle">Cours interactif 2h · ENSA Oujda</div>
+    </div>
+    <div class="sidebar-progress-wrap">
+      <div class="progress-label">
+        <span>Progression</span>
+        <span id="prog-pct">0%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="prog-fill" style="width:0%"></div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Introduction</div>
+      <div class="nav-item active" onclick="goTo(0)" id="nav-0">
+        <div class="nav-dot"></div>
+        <div class="nav-text">
+          <div class="nav-title">Introduction</div>
+          <div class="nav-time">0:00 — 0:15 min</div>
+        </div>
+      </div>
+      <div class="nav-section-label">Modules</div>
+      <div class="nav-item" onclick="goTo(1)" id="nav-1">
+        <div class="nav-dot"></div>
+        <div class="nav-text">
+          <div class="nav-title">La Valeur Ajoutée</div>
+          <div class="nav-time">0:15 — 0:45 min</div>
+        </div>
+      </div>
+      <div class="nav-item" onclick="goTo(2)" id="nav-2">
+        <div class="nav-dot"></div>
+        <div class="nav-text">
+          <div class="nav-title">Les 7 Gaspillages</div>
+          <div class="nav-time">0:45 — 1:20 min</div>
+        </div>
+      </div>
+      <div class="nav-item" onclick="goTo(3)" id="nav-3">
+        <div class="nav-dot"></div>
+        <div class="nav-text">
+          <div class="nav-title">Lean 6 Sigma</div>
+          <div class="nav-time">1:20 — 1:45 min</div>
+        </div>
+      </div>
+      <div class="nav-item" onclick="goTo(4)" id="nav-4">
+        <div class="nav-dot"></div>
+        <div class="nav-text">
+          <div class="nav-title">État d'Esprit Lean</div>
+          <div class="nav-time">1:45 — 2:00 min</div>
+        </div>
+      </div>
+      <div class="nav-section-label">Évaluation</div>
+      <div class="nav-item" onclick="goTo(5)" id="nav-5">
+        <div class="nav-dot"></div>
+        <div class="nav-text">
+          <div class="nav-title">Quiz Final</div>
+          <div class="nav-time">10 questions</div>
+        </div>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      Module <span id="footer-cur">1</span> sur <span>6</span>
+    </div>
+  </aside>
+
+  <!-- ══ MAIN ══ -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Introduction — Qu'est-ce que le Lean ?</div>
+      <div class="topbar-meta">
+        <span class="badge">120 min</span>
+        <span class="badge active-b" id="topbar-mod">Module 1/6</span>
+      </div>
+    </div>
+
+    <!-- ══ PAGE 0 : INTRO ══ -->
+    <div class="page active" id="page-0">
+      <div class="hero">
+        <div class="hero-eyebrow">Module 1 · Introduction</div>
+        <div class="hero-title">Qu'est-ce que<br>le Lean ?</div>
+        <div class="hero-sub">Une philosophie de management née chez Toyota, visant à éliminer les gaspillages et maximiser la valeur pour le client.</div>
+        <div class="chips-row">
+          <span class="chip chip-cyan">120 min</span>
+          <span class="chip chip-green">5 modules</span>
+          <span class="chip chip-gold">Quiz final</span>
+          <span class="chip chip-red">Interactif</span>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><span class="dot"></span>Origine</div>
+          <p>Développé par Toyota dans les années 1950 (TPS — Toyota Production System), formalisé par Womack & Jones dans <em>The Machine That Changed the World</em> (1990).</p>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="dot" style="background:var(--green)"></span>Objectif central</div>
+          <p>Réduire les gaspillages (MUDA) et augmenter la valeur ajoutée pour le client, en améliorant continuellement les processus (Kaizen).</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--gold)"></span>Les 5 Principes Lean — Womack & Jones</div>
+        <div class="step-flow">
+          <div class="step-box c">1. Valeur</div>
+          <span class="step-arrow">→</span>
+          <div class="step-box g">2. Flux de valeur</div>
+          <span class="step-arrow">→</span>
+          <div class="step-box o">3. Flux tiré</div>
+          <span class="step-arrow">→</span>
+          <div class="step-box r">4. Flux continu</div>
+          <span class="step-arrow">→</span>
+          <div class="step-box">5. Perfection</div>
+        </div>
+        <p style="font-size:12px;color:var(--grey);margin-top:0.5rem">Ces 5 principes définissent la démarche Lean : de la définition de la valeur jusqu'à la recherche permanente de la perfection.</p>
+      </div>
+
+      <div class="grid-3">
+        <div class="hbox blue">
+          <div class="hbox-title">Lean seul</div>
+          <p>Réduit les gaspillages et le lead time. Objectif : <strong>−25% de temps de cycle</strong>.</p>
+        </div>
+        <div class="hbox green">
+          <div class="hbox-title">6 Sigma seul</div>
+          <p>Réduit la variabilité et les défauts. Objectif : <strong>élimination de 99% des défauts</strong>.</p>
+        </div>
+        <div class="hbox gold">
+          <div class="hbox-title">Lean 6 Sigma</div>
+          <p>Combine les deux : <strong>rapidité + qualité</strong>. Satisfaction client et réduction des coûts.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--grey)"></span>Plan du cours — 2 heures</div>
+        <div class="timeline" style="margin-top:0.5rem">
+          <div class="tl-item"><div class="tl-label">0:00 — 0:15</div><div class="tl-text">Module 1 · Introduction — Qu'est-ce que le Lean ?</div></div>
+          <div class="tl-item"><div class="tl-label">0:15 — 0:45</div><div class="tl-text">Module 2 · La Valeur Ajoutée — VA / NVA / Gaspillage</div></div>
+          <div class="tl-item"><div class="tl-label">0:45 — 1:20</div><div class="tl-text">Module 3 · Les 7 Gaspillages MUDA — 3 familles d'inefficacités</div></div>
+          <div class="tl-item"><div class="tl-label">1:20 — 1:45</div><div class="tl-text">Module 4 · Lean 6 Sigma — Lead Time + Élimination des Défauts</div></div>
+          <div class="tl-item"><div class="tl-label">1:45 — 2:00</div><div class="tl-text">Module 5 · Lean — Un État d'Esprit (Kaizen, 5S, culture continue)</div></div>
+        </div>
+      </div>
+
+      <div class="nav-footer">
+        <button class="btn btn-outline" disabled>← Précédent</button>
+        <span class="nav-counter">1 / 6</span>
+        <button class="btn btn-primary" onclick="goTo(1)">Suivant →</button>
+      </div>
+    </div>
+
+    <!-- ══ PAGE 1 : VALEUR AJOUTÉE ══ -->
+    <div class="page" id="page-1">
+      <div class="mod-header">
+        <div class="mod-eyebrow">Module 2 · 0:15 — 0:45 min</div>
+        <div class="mod-title">La Valeur Ajoutée</div>
+        <div class="mod-desc">Comprendre ce que le client valorise vraiment — et tout ce qui n'est pas de la valeur.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>Définition : qu'est-ce que la Valeur ?</div>
+        <p>La valeur est définie <strong>uniquement par le client</strong>. C'est ce pour quoi le client est prêt à payer. Tout le reste est potentiellement un gaspillage à éliminer ou réduire.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--gold)"></span>Les 3 catégories d'activités</div>
+        <div style="margin-top:0.75rem">
+          <div class="vbar-wrap">
+            <div class="vbar-label"><span>Méthode Standard (0% Lean)</span><span style="color:var(--grey)">5% VA · 35% NVA · 60% Gaspillage</span></div>
+            <div class="vbar-track"><div class="vb-va" style="width:5%">VA</div><div class="vb-nva" style="width:35%">NVA</div><div class="vb-waste" style="width:60%">Gaspi</div></div>
+          </div>
+          <div class="vbar-wrap">
+            <div class="vbar-label"><span>Amélioration Lean-6S</span><span style="color:var(--grey)">20% VA · 52% NVA · 28% Gaspillage</span></div>
+            <div class="vbar-track"><div class="vb-va" style="width:20%">VA</div><div class="vb-nva" style="width:52%">NVA</div><div class="vb-waste" style="width:28%">Gaspi</div></div>
+          </div>
+          <div class="vbar-wrap">
+            <div class="vbar-label"><span>Transformation Evolution</span><span style="color:var(--grey)">42% VA · 50% NVA · 8% Gaspillage</span></div>
+            <div class="vbar-track"><div class="vb-va" style="width:42%">VA</div><div class="vb-nva" style="width:50%">NVA</div><div class="vb-waste" style="width:8%">Gaspi</div></div>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:rgba(29,184,122,0.6)"></div>Valeur Ajoutée (VA)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:rgba(245,166,35,0.6)"></div>Non Valeur Ajoutée (NVA)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:rgba(232,72,85,0.6)"></div>Gaspillage pur</div>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="hbox green"><div class="hbox-title">Valeur Ajoutée (VA)</div><p>Activités qui transforment le produit et pour lesquelles le client paie. Ex : usinage, assemblage, traitement thermique.</p></div>
+        <div class="hbox gold"><div class="hbox-title">Non Valeur Ajoutée (NVA)</div><p>Nécessaires mais sans valeur directe. Ex : contrôles réglementaires, transport interne obligatoire, setups machines.</p></div>
+        <div class="hbox red"><div class="hbox-title">Gaspillage pur</div><p>N'ajoutent aucune valeur. À éliminer en priorité. Ex : attentes, déplacements inutiles, surproduction.</p></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Simulateur interactif — ajustez votre processus</div>
+        <div style="margin-top:0.75rem">
+          <div class="slider-row">
+            <label>% VA</label>
+            <input type="range" min="1" max="60" value="20" id="sl-va" oninput="updateSim()">
+            <span class="slider-val" id="sv-va">20%</span>
+          </div>
+          <div class="slider-row">
+            <label>% NVA</label>
+            <input type="range" min="5" max="70" value="40" id="sl-nva" oninput="updateSim()">
+            <span class="slider-val" id="sv-nva">40%</span>
+          </div>
+          <div class="vbar-track" style="height:38px;margin-top:0.75rem">
+            <div class="vb-va" id="sim-va" style="width:20%"></div>
+            <div class="vb-nva" id="sim-nva" style="width:40%"></div>
+            <div class="vb-waste" id="sim-waste" style="width:40%"></div>
+          </div>
+          <p style="font-size:12px;color:var(--grey);margin-top:8px" id="sim-info">Gaspillage : 40% — Potentiel d'amélioration élevé !</p>
+        </div>
+      </div>
+
+      <div class="hbox cyan">
+        <div class="hbox-title">Chiffre clé</div>
+        <p>Moins de 10% du temps est consacré à la création de VA dans un processus standard. Le Lean-6S vise à porter ce ratio à 40–60% en éliminant les gaspillages identifiés.</p>
+      </div>
+
+      <div class="nav-footer">
+        <button class="btn btn-outline" onclick="goTo(0)">← Précédent</button>
+        <span class="nav-counter">2 / 6</span>
+        <button class="btn btn-primary" onclick="goTo(2)">Suivant →</button>
+      </div>
+    </div>
+
+    <!-- ══ PAGE 2 : GASPILLAGES ══ -->
+    <div class="page" id="page-2">
+      <div class="mod-header">
+        <div class="mod-eyebrow">Module 3 · 0:45 — 1:20 min</div>
+        <div class="mod-title">Les 7 Gaspillages — MUDA</div>
+        <div class="mod-desc">Cliquez sur chaque gaspillage pour découvrir sa définition et des exemples concrets.</div>
+      </div>
+
+      <div class="grid-3">
+        <div class="hbox red"><div class="hbox-title">MUDA = Gaspillages</div><p>Activités consommant des ressources sans créer de valeur pour le client.</p></div>
+        <div class="hbox gold"><div class="hbox-title">MURA = Variation</div><p>Irrégularités dans le flux de production. Alternance surcharge / sous-charge.</p></div>
+        <div class="hbox blue"><div class="hbox-title">MURI = Surcharge</div><p>Demandes excessives sur personnes ou équipements. Usure prématurée.</p></div>
+      </div>
+
+      <div class="waste-grid">
+        <div class="waste-card" onclick="toggleWaste(this)"><div class="waste-icon">🚚</div><div class="waste-name">Transport</div><div class="waste-detail">Déplacement inutile de pièces ou matériaux. Ex : acheminer des composants d'un bout à l'autre de l'usine sans nécessité réelle.</div></div>
+        <div class="waste-card" onclick="toggleWaste(this)"><div class="waste-icon">📦</div><div class="waste-name">Inventaire</div><div class="waste-detail">Stock excessif (matières, en-cours, produits finis). Immobilise du capital et masque les problèmes de fond.</div></div>
+        <div class="waste-card" onclick="toggleWaste(this)"><div class="waste-icon">🏃</div><div class="waste-name">Motion</div><div class="waste-detail">Mouvements inutiles des opérateurs. Ex : chercher des outils, se pencher, marcher pour aller chercher une pièce à l'autre bout.</div></div>
+        <div class="waste-card" onclick="toggleWaste(this)"><div class="waste-icon">⏳</div><div class="waste-name">Waiting</div><div class="waste-detail">Temps d'attente (machine, information, matière). Souvent le gaspillage le plus visible dans les processus de service.</div></div>
+        <div class="waste-card" onclick="toggleWaste(this)"><div class="waste-icon">⚙️</div><div class="waste-name">Over-processing</div><div class="waste-detail">Opérations superflues non demandées par le client. Ex : polissage d'une surface jamais vue, doubles vérifications inutiles.</div></div>
+        <div class="waste-card" onclick="toggleWaste(this)"><div class="waste-icon">🏭</div><div class="waste-name">Surproduction</div><div class="waste-detail">Produire plus que la demande client. PIRE gaspillage selon Ohno : il génère tous les autres (stock, transport, attente).</div></div>
+        <div class="waste-card" onclick="toggleWaste(this)"><div class="waste-icon">❌</div><div class="waste-name">Défauts</div><div class="waste-detail">Non-conformités, rebuts, retouches. Coûteux en temps, matières et réputation. À éliminer à la source (Poka-Yoke).</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--green)"></span>Impact de l'élimination des gaspillages</div>
+        <div class="stat-row">
+          <div class="stat-card"><div class="stat-val sv-green">−25%</div><div class="stat-lbl">Lead Time</div></div>
+          <div class="stat-card"><div class="stat-val sv-cyan">+35%</div><div class="stat-lbl">Productivité</div></div>
+          <div class="stat-card"><div class="stat-val sv-gold">−40%</div><div class="stat-lbl">Surface atelier</div></div>
+          <div class="stat-card"><div class="stat-val sv-red">−99%</div><div class="stat-lbl">Défauts (6σ)</div></div>
+        </div>
+      </div>
+
+      <div class="exercise-box">
+        <div class="ex-title">Exercice pratique — Identifiez les MUDA</div>
+        <p>Dans une clinique hospitalière : un patient attend 45 min avant consultation, le dossier papier est transporté 3 fois entre services, et le médecin refait une anamnèse déjà effectuée par l'infirmière.<br><strong style="color:var(--gold)">Question :</strong> Identifiez les 3 MUDA correspondants et justifiez.</p>
+        <div style="margin-top:0.75rem;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-outline" style="font-size:12px" onclick="showAnswer('ex-ans')">Voir la réponse ↓</button>
+        </div>
+        <div id="ex-ans" style="display:none;margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid rgba(245,166,35,0.2)">
+          <p style="color:rgba(242,244,248,0.8);font-size:13px;line-height:1.7"><strong style="color:var(--green)">1. Waiting</strong> — Attente de 45 min sans création de valeur pour le patient.<br><strong style="color:var(--green)">2. Transport</strong> — Déplacement du dossier 3 fois entre services (transport non nécessaire).<br><strong style="color:var(--green)">3. Over-processing</strong> — Double anamnèse : travail refait inutilement par le médecin.</p>
+        </div>
+      </div>
+
+      <div class="nav-footer">
+        <button class="btn btn-outline" onclick="goTo(1)">← Précédent</button>
+        <span class="nav-counter">3 / 6</span>
+        <button class="btn btn-primary" onclick="goTo(3)">Suivant →</button>
+      </div>
+    </div>
+
+    <!-- ══ PAGE 3 : LEAN 6 SIGMA ══ -->
+    <div class="page" id="page-3">
+      <div class="mod-header">
+        <div class="mod-eyebrow">Module 4 · 1:20 — 1:45 min</div>
+        <div class="mod-title">Lean 6 Sigma</div>
+        <div class="mod-desc">Combiner la réduction des gaspillages (Lean) et la réduction de la variabilité (6 Sigma) pour une excellence opérationnelle complète.</div>
+      </div>
+
+      <div class="vs-row">
+        <div class="vs-left"><div class="vs-head">Lean seul</div><div class="vs-body">Rapide mais pas toujours précis. Réduit le lead time et élimine les gaspillages. Moins efficace sur la variabilité statistique.</div></div>
+        <div class="vs-right"><div class="vs-head">Lean + 6 Sigma</div><div class="vs-body">Rapide ET précis. Lead time −25%, défauts −99%. Satisfaction client maximale et réduction des coûts simultanées.</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>Le triangle Qualité — Coût — Délai</div>
+        <div class="triangle-wrap">
+          <svg width="100%" viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="200,24 40,186 360,186" fill="none" stroke="rgba(0,200,224,0.3)" stroke-width="1.5"/>
+            <line x1="200" y1="24" x2="200" y2="186" stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="4,4"/>
+            <line x1="120" y1="105" x2="280" y2="105" stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="4,4"/>
+            <rect x="160" y="10" width="80" height="28" rx="8" fill="rgba(0,200,224,0.15)" stroke="rgba(0,200,224,0.4)" stroke-width="0.5"/>
+            <text x="200" y="28" text-anchor="middle" font-size="12" font-weight="600" fill="#00C8E0" font-family="Syne,sans-serif">Quality</text>
+            <rect x="20" y="174" width="70" height="24" rx="8" fill="rgba(245,166,35,0.15)" stroke="rgba(245,166,35,0.4)" stroke-width="0.5"/>
+            <text x="55" y="190" text-anchor="middle" font-size="12" font-weight="600" fill="#F5A623" font-family="Syne,sans-serif">Cost</text>
+            <rect x="310" y="174" width="72" height="24" rx="8" fill="rgba(29,184,122,0.15)" stroke="rgba(29,184,122,0.4)" stroke-width="0.5"/>
+            <text x="346" y="190" text-anchor="middle" font-size="12" font-weight="600" fill="#1DB87A" font-family="Syne,sans-serif">On Time</text>
+            <rect x="140" y="96" width="120" height="28" rx="8" fill="rgba(26,111,212,0.2)" stroke="rgba(26,111,212,0.5)" stroke-width="0.5"/>
+            <text x="200" y="113" text-anchor="middle" font-size="11" font-weight="700" fill="#F2F4F8" font-family="Syne,sans-serif">Lean 6 Sigma</text>
+            <text x="200" y="145" text-anchor="middle" font-size="10" fill="rgba(138,155,181,0.8)" font-family="DM Sans,sans-serif">Customer Satisfaction &amp; Cost Optimization</text>
+          </svg>
+        </div>
+        <p style="font-size:12px;color:var(--grey);text-align:center;margin-top:0.25rem">Le Lean 6 Sigma optimise simultanément la qualité, le coût et les délais — la triade de satisfaction client.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--gold)"></span>Les 3 niveaux de transformation</div>
+        <div class="hbox gold" style="margin-bottom:0.5rem">
+          <div class="hbox-title">1. Méthode Standard (0% Lean)</div>
+          <p>VA = 5%, NVA = 35%, Gaspillage = 60%. Lead time élevé, nombreux défauts, insatisfaction client.</p>
+        </div>
+        <div class="hbox blue" style="margin-bottom:0.5rem">
+          <div class="hbox-title">2. Amélioration Lean-6S (en cours)</div>
+          <p>VA = 20%, NVA = 52%, Gaspillage = 28%. Lead time réduit de 25%, taux de défauts en chute. Profitabilité en hausse.</p>
+        </div>
+        <div class="hbox green" style="margin-bottom:0">
+          <div class="hbox-title">3. Transformation (Évolution)</div>
+          <p>VA = 42%, NVA = 50%, Gaspillage = 8%. Compétitivité maximale. Possibilité de baisser les prix ou d'augmenter les marges.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--grey)"></span>Indicateurs Lean 6 Sigma clés</div>
+        <table class="lean-table">
+          <thead><tr><th>Indicateur</th><th>Formule / Définition</th><th>Objectif</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Lead Time</strong></td><td>Temps commande → livraison</td><td class="highlight-cell">Réduire de 25%+</td></tr>
+            <tr><td><strong>Takt Time</strong></td><td>Temps disponible / Demande client</td><td class="highlight-cell">Synchroniser production</td></tr>
+            <tr><td><strong>DPMO</strong></td><td>Défauts / (unités × opp.) × 10⁶</td><td class="highlight-cell">&lt; 6 210 (4σ)</td></tr>
+            <tr><td><strong>OEE</strong></td><td>Disponibilité × Performance × Qualité</td><td class="highlight-cell">&gt; 85%</td></tr>
+            <tr><td><strong>% VA</strong></td><td>Temps VA / Lead Time total</td><td class="highlight-cell">&gt; 40%</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="nav-footer">
+        <button class="btn btn-outline" onclick="goTo(2)">← Précédent</button>
+        <span class="nav-counter">4 / 6</span>
+        <button class="btn btn-primary" onclick="goTo(4)">Suivant →</button>
+      </div>
+    </div>
+
+    <!-- ══ PAGE 4 : ÉTAT D'ESPRIT ══ -->
+    <div class="page" id="page-4">
+      <div class="mod-header">
+        <div class="mod-eyebrow">Module 5 · 1:45 — 2:00 min</div>
+        <div class="mod-title">Lean — Un État d'Esprit</div>
+        <div class="mod-desc">Au-delà des outils : la culture d'amélioration continue qui transforme durablement une organisation.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>Le Kaizen — amélioration continue</div>
+        <p><strong>Kaizen</strong> (改善) signifie "changer pour le mieux" en japonais. C'est un état d'esprit, une philosophie de petites améliorations quotidiennes plutôt que de grandes transformations rares et coûteuses.</p>
+        <div class="chips-row">
+          <span class="chip chip-cyan">Chaque employé est acteur</span>
+          <span class="chip chip-green">Petits pas quotidiens</span>
+          <span class="chip chip-gold">Aucune idée n'est trop petite</span>
+          <span class="chip chip-red">Éliminer avant d'automatiser</span>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><span class="dot" style="background:var(--gold)"></span>Les outils Lean principaux</div>
+          <div class="timeline" style="margin-top:0.25rem">
+            <div class="tl-item"><div class="tl-label">5S</div><div class="tl-text">Seiri, Seiton, Seiso, Seiketsu, Shitsuke — Organisation et propreté de l'espace de travail</div></div>
+            <div class="tl-item"><div class="tl-label">VSM</div><div class="tl-text">Value Stream Mapping — Cartographie des flux de valeur pour identifier les gaspillages</div></div>
+            <div class="tl-item"><div class="tl-label">Poka-Yoke</div><div class="tl-text">Dispositifs anti-erreur — Rendre les erreurs impossibles ou immédiatement détectables</div></div>
+            <div class="tl-item"><div class="tl-label">Kanban</div><div class="tl-text">Pilotage par la demande — Flux tiré, production à la commande exacte</div></div>
+            <div class="tl-item"><div class="tl-label">SMED</div><div class="tl-text">Single Minute Exchange of Die — Réduction des temps de changement de série</div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="dot" style="background:var(--green)"></span>L'état d'esprit en 4 attitudes</div>
+          <div class="hbox green" style="margin-bottom:0.5rem"><div class="hbox-title">Penser valeur client</div><p>Se demander : "cette activité crée-t-elle de la valeur pour le client ?"</p></div>
+          <div class="hbox blue" style="margin-bottom:0.5rem"><div class="hbox-title">Voir les gaspillages</div><p>Aller sur le terrain (Gemba Walk). Observer les flux réels, pas théoriques.</p></div>
+          <div class="hbox gold" style="margin-bottom:0.5rem"><div class="hbox-title">Agir collectivement</div><p>Impliquer toute l'équipe. Les meilleures idées viennent des opérateurs.</p></div>
+          <div class="hbox red" style="margin-bottom:0"><div class="hbox-title">Viser la perfection</div><p>L'amélioration n'a pas de fin. Chaque victoire ouvre de nouvelles opportunités.</p></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Le cycle PDCA — Roue de Deming</div>
+        <div class="step-flow" style="justify-content:center">
+          <div class="step-box c" style="text-align:center">Plan<br><span style="font-size:10px;font-weight:400;opacity:0.8">Planifier</span></div>
+          <span class="step-arrow">→</span>
+          <div class="step-box g" style="text-align:center">Do<br><span style="font-size:10px;font-weight:400;opacity:0.8">Exécuter</span></div>
+          <span class="step-arrow">→</span>
+          <div class="step-box o" style="text-align:center">Check<br><span style="font-size:10px;font-weight:400;opacity:0.8">Vérifier</span></div>
+          <span class="step-arrow">→</span>
+          <div class="step-box r" style="text-align:center">Act<br><span style="font-size:10px;font-weight:400;opacity:0.8">Ajuster</span></div>
+          <span class="step-arrow" style="font-size:18px">↩</span>
+        </div>
+        <p style="font-size:12px;color:var(--grey);text-align:center;margin-top:0.5rem">Le PDCA est le moteur de l'amélioration continue. On ne "finit" jamais un PDCA — on recommence à un niveau supérieur.</p>
+      </div>
+
+      <div class="nav-footer">
+        <button class="btn btn-outline" onclick="goTo(3)">← Précédent</button>
+        <span class="nav-counter">5 / 6</span>
+        <button class="btn btn-cyan" onclick="goTo(5)">Quiz Final →</button>
+      </div>
+    </div>
+
+    <!-- ══ PAGE 5 : QUIZ ══ -->
+    <div class="page" id="page-5">
+      <div class="mod-header">
+        <div class="mod-eyebrow" style="color:var(--gold)">Évaluation finale · 10 questions</div>
+        <div class="mod-title">Quiz — Testez vos connaissances</div>
+        <div class="mod-desc">Cliquez sur la réponse correcte. La correction s'affiche immédiatement après chaque choix.</div>
+      </div>
+
+      <div id="quiz-container"></div>
+
+      <div class="score-card" id="score-card">
+        <div class="score-big" id="score-val">—</div>
+        <div class="score-sub">sur 10 questions</div>
+        <div class="score-level" id="score-level">—</div>
+        <div class="stat-row" style="margin-top:1rem">
+          <div class="stat-card"><div class="stat-val" id="score-pct" style="font-size:20px">—</div><div class="stat-lbl">Réussite</div></div>
+          <div class="stat-card"><div class="stat-val" id="score-correct" style="font-size:20px;color:var(--green)">—</div><div class="stat-lbl">Correctes</div></div>
+          <div class="stat-card"><div class="stat-val" id="score-wrong" style="font-size:20px;color:var(--red)">—</div><div class="stat-lbl">Incorrectes</div></div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;margin-top:0.5rem;justify-content:center" onclick="goTo(0)">Revoir le cours depuis le début</button>
+      </div>
+
+      <div class="nav-footer">
+        <button class="btn btn-outline" onclick="goTo(4)">← Précédent</button>
+        <span class="nav-counter">6 / 6</span>
+        <button class="btn btn-outline" disabled>Fin du cours</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── NAVIGATION ──────────────────────────────────────────
+const TITLES = [
+  "Introduction — Qu'est-ce que le Lean ?",
+  "La Valeur Ajoutée — VA / NVA / Gaspillage",
+  "Les 7 Gaspillages — MUDA / MURA / MURI",
+  "Lean 6 Sigma — Combiner vitesse et qualité",
+  "Lean — Un État d'Esprit (Kaizen, PDCA)",
+  "Quiz Final — Évaluez vos connaissances"
+];
+
+let current = 0;
+const visited = new Set([0]);
+
+function goTo(n) {
+  document.getElementById('page-' + current).classList.remove('active');
+  document.getElementById('nav-' + current).classList.remove('active');
+  if (current !== n) document.getElementById('nav-' + current).classList.add('done');
+  current = n;
+  visited.add(n);
+  document.getElementById('page-' + n).classList.add('active');
+  document.getElementById('nav-' + n).classList.remove('done');
+  document.getElementById('nav-' + n).classList.add('active');
+  document.getElementById('topbar-title').textContent = TITLES[n];
+  document.getElementById('topbar-mod').textContent = 'Module ' + (n+1) + '/6';
+  document.getElementById('footer-cur').textContent = n + 1;
+  const pct = Math.round((visited.size / 6) * 100);
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+  document.querySelector('.sidebar').classList.remove('open');
+}
+
+// ── SIMULATOR ──────────────────────────────────────────
+function updateSim() {
+  const va = parseInt(document.getElementById('sl-va').value);
+  const nva = parseInt(document.getElementById('sl-nva').value);
+  const waste = Math.max(0, 100 - va - nva);
+  const total = va + nva + waste;
+  document.getElementById('sv-va').textContent = va + '%';
+  document.getElementById('sv-nva').textContent = nva + '%';
+  document.getElementById('sim-va').style.width = (va/total*100).toFixed(1) + '%';
+  document.getElementById('sim-nva').style.width = (nva/total*100).toFixed(1) + '%';
+  document.getElementById('sim-waste').style.width = (waste/total*100).toFixed(1) + '%';
+  let msg = 'Gaspillage : ' + waste + '%';
+  if (waste > 50) msg += ' — Potentiel d\'amélioration très élevé !';
+  else if (waste > 25) msg += ' — Encore des marges de progrès.';
+  else if (waste > 10) msg += ' — Bon niveau, continuez !';
+  else msg += ' — Excellent niveau Lean ! 🏆';
+  document.getElementById('sim-info').textContent = msg;
+}
+
+// ── WASTE CARDS ──────────────────────────────────────────
+function toggleWaste(el) {
+  const was = el.classList.contains('selected');
+  document.querySelectorAll('.waste-card').forEach(c => c.classList.remove('selected'));
+  if (!was) el.classList.add('selected');
+}
+
+// ── EXERCISE ──────────────────────────────────────────
+function showAnswer(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+// ── QUIZ ──────────────────────────────────────────────
+const QUESTIONS = [
+  { q: "Que signifie MUDA en japonais ?", opts: ["Amélioration continue", "Gaspillage", "Valeur ajoutée"], correct: 1, explain: "MUDA signifie Gaspillage. MURA = Variation, MURI = Surcharge." },
+  { q: "Quel est le PIRE gaspillage selon Taiichi Ohno (Toyota) ?", opts: ["Les défauts", "L'attente", "La surproduction"], correct: 2, explain: "La surproduction génère tous les autres gaspillages : stock excessif, transport, attente." },
+  { q: "Dans la méthode 5S, que représente le 3e S (Seiso) ?", opts: ["Standardiser", "Nettoyer", "Ranger"], correct: 1, explain: "Seiri=Trier, Seiton=Ranger, Seiso=Nettoyer, Seiketsu=Standardiser, Shitsuke=Respecter." },
+  { q: "Quel pourcentage du temps est consacré à la VA dans un processus standard ?", opts: ["35 – 40 %", "Moins de 10 %", "Environ 50 %"], correct: 1, explain: "Moins de 10% du temps crée de la valeur. Le reste est NVA ou gaspillage pur." },
+  { q: "Le Takt Time est égal à :", opts: ["Temps de cycle machine", "Temps disponible / Demande client", "Lead Time − Temps d'attente"], correct: 1, explain: "Takt Time = Temps disponible / Demande client. Il cadence la production sur le rythme client." },
+  { q: "Un médecin répète une anamnèse déjà faite par l'infirmière. Quel MUDA est-ce ?", opts: ["Inventaire", "Transport", "Over-processing"], correct: 2, explain: "Refaire une tâche déjà effectuée = Over-processing (sur-traitement inutile)." },
+  { q: "Lean 6 Sigma vise une réduction du lead time de :", opts: ["99 %", "25 %", "50 %"], correct: 1, explain: "Lean vise −25% de lead time. La réduction des défauts est l'objectif de 6 Sigma (−99%)." },
+  { q: "Que signifie Kaizen ?", opts: ["Éliminer les défauts", "Flux tiré", "Changer pour le mieux"], correct: 2, explain: "Kaizen (改善) signifie changer pour le mieux : amélioration continue par petits pas quotidiens." },
+  { q: "La valeur est définie par :", opts: ["Les ingénieurs qualité", "Le client uniquement", "La direction générale"], correct: 1, explain: "La valeur est définie par le client, pas par le producteur ni par les ingénieurs." },
+  { q: "OEE (Overall Equipment Effectiveness) = ?", opts: ["Qualité + Performance + Arrêts", "Disponibilité × Performance × Qualité", "Temps de marche / Temps total"], correct: 1, explain: "OEE = Disponibilité × Performance × Qualité. Objectif Lean : OEE > 85%." }
+];
+
+let answered = new Array(10).fill(false);
+let score = 0;
+
+function buildQuiz() {
+  const container = document.getElementById('quiz-container');
+  container.innerHTML = '';
+  QUESTIONS.forEach((q, i) => {
+    const block = document.createElement('div');
+    block.className = 'quiz-block';
+    block.innerHTML = `
+      <div class="quiz-num">QUESTION ${i+1} / 10</div>
+      <div class="quiz-q">${q.q}</div>
+      <div class="quiz-opts" id="opts-${i}">
+        ${q.opts.map((opt, j) => `<button class="quiz-opt" onclick="answer(this,${j === q.correct},${i},'${q.explain.replace(/'/g,"\\'")}')">
+          <span style="color:var(--grey);margin-right:8px;font-family:Syne,sans-serif;font-size:11px">${['A','B','C'][j]}</span>${opt}
+        </button>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="fb-${i}"></div>
+    `;
+    container.appendChild(block);
+  });
+}
+
+function answer(btn, correct, idx, explanation) {
+  if (answered[idx]) return;
+  answered[idx] = true;
+  if (correct) score++;
+  const opts = document.querySelectorAll('#opts-' + idx + ' .quiz-opt');
+  opts.forEach(o => { o.disabled = true; });
+  btn.classList.add(correct ? 'correct' : 'wrong');
+  const fb = document.getElementById('fb-' + idx);
+  fb.textContent = (correct ? '✓ Correct ! ' : '✗ Incorrect. ') + explanation;
+  fb.className = 'quiz-feedback show ' + (correct ? 'ok' : 'ko');
+  if (answered.filter(Boolean).length === 10) showScore();
+}
+
+function showScore() {
+  const card = document.getElementById('score-card');
+  card.classList.add('show');
+  document.getElementById('score-val').textContent = score + '/10';
+  document.getElementById('score-pct').textContent = Math.round(score * 10) + '%';
+  document.getElementById('score-correct').textContent = score;
+  document.getElementById('score-wrong').textContent = 10 - score;
+  let level, color;
+  if      (score >= 9) { level = '🏆 Expert Lean'; color = '#1DB87A'; }
+  else if (score >= 7) { level = '✅ Bon niveau'; color = '#00C8E0'; }
+  else if (score >= 5) { level = '📈 En progression'; color = '#F5A623'; }
+  else                 { level = '📚 À revoir'; color = '#E84855'; }
+  const el = document.getElementById('score-level');
+  el.textContent = level;
+  el.style.color = color;
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+buildQuiz();
+</script>
+</body>
+</html>
