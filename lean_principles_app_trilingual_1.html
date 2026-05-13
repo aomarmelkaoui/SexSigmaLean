@@ -1,0 +1,1824 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lean Principles — Interactive Course</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Noto+Kufi+Arabic:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════
+   ROOT & RESET
+══════════════════════════════════════════ */
+:root {
+  --navy:   #08192E;
+  --navy2:  #0F2235;
+  --navy3:  #172D45;
+  --blue:   #1A6FD4;
+  --blue2:  #2280F0;
+  --cyan:   #00D4F0;
+  --gold:   #F5A623;
+  --green:  #1DC87A;
+  --red:    #E84855;
+  --white:  #EFF2F8;
+  --grey:   #7A8EA8;
+  --grey2:  #1E3348;
+  --r: 12px;
+  --sw: 260px;
+  --hh: 62px;
+  font-size: 15px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--navy);
+  color: var(--white);
+  overflow: hidden;
+}
+body[dir="rtl"] { font-family: 'Noto Kufi Arabic', sans-serif; }
+
+/* ══ NOISE ══ */
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+/* ══════════════════════════════════════════
+   LANGUAGE SPLASH
+══════════════════════════════════════════ */
+#lang-splash {
+  position: fixed; inset: 0; z-index: 999;
+  background: var(--navy);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column;
+  gap: 0;
+}
+.splash-inner {
+  max-width: 520px; width: 90%; text-align: center;
+}
+.splash-logo {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px; font-weight: 800;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--cyan); margin-bottom: 2rem;
+}
+.splash-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(28px, 5vw, 42px);
+  font-weight: 800; line-height: 1.1;
+  margin-bottom: 0.5rem;
+}
+.splash-sub {
+  font-size: 13px; color: var(--grey);
+  margin-bottom: 2.5rem; line-height: 1.7;
+}
+.lang-grid {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 12px;
+  margin-bottom: 1.5rem;
+}
+.lang-btn {
+  background: var(--navy2);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  padding: 1.5rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.lang-btn::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(0,212,240,0.08), transparent);
+  opacity: 0; transition: opacity 0.2s;
+}
+.lang-btn:hover::before { opacity: 1; }
+.lang-btn:hover {
+  border-color: rgba(0,212,240,0.5);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3), 0 0 20px rgba(0,212,240,0.1);
+}
+.lang-btn.selected {
+  border-color: var(--cyan);
+  background: rgba(0,212,240,0.12);
+  box-shadow: 0 0 20px rgba(0,212,240,0.2);
+}
+.lang-flag { font-size: 32px; margin-bottom: 8px; display: block; }
+.lang-name { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--white); display: block; }
+.lang-native { font-size: 12px; color: var(--grey); margin-top: 2px; display: block; }
+.lang-native.ar { font-family: 'Noto Kufi Arabic', sans-serif; font-size: 13px; }
+
+.start-btn {
+  width: 100%; padding: 14px;
+  background: linear-gradient(135deg, var(--blue), var(--blue2));
+  border: none; border-radius: 10px;
+  font-family: 'Syne', sans-serif;
+  font-size: 14px; font-weight: 700;
+  color: var(--white); cursor: pointer;
+  transition: all 0.2s; letter-spacing: 0.04em;
+  opacity: 0.4; pointer-events: none;
+}
+.start-btn.ready { opacity: 1; pointer-events: all; }
+.start-btn.ready:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(26,111,212,0.4); }
+
+/* ══════════════════════════════════════════
+   APP LAYOUT
+══════════════════════════════════════════ */
+#app { display: none; height: 100vh; position: relative; z-index: 1; }
+#app.show { display: flex; }
+
+/* ══ SIDEBAR ══ */
+.sidebar {
+  width: var(--sw); flex-shrink: 0;
+  background: var(--navy2);
+  border-right: 1px solid rgba(255,255,255,0.06);
+  display: flex; flex-direction: column;
+  overflow: hidden; position: relative;
+  transition: width 0.3s ease;
+}
+[dir="rtl"] .sidebar { border-right: none; border-left: 1px solid rgba(255,255,255,0.06); }
+
+.sb-logo { padding: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.sb-brand { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cyan); }
+.sb-sub { font-size: 11px; color: var(--grey); margin-top: 3px; }
+
+.sb-prog { padding: 1rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.prog-lbl { display: flex; justify-content: space-between; font-size: 11px; color: var(--grey); margin-bottom: 6px; }
+.prog-track { height: 4px; background: var(--grey2); border-radius: 99px; overflow: hidden; }
+.prog-fill { height: 100%; background: linear-gradient(90deg, var(--blue2), var(--cyan)); border-radius: 99px; transition: width 0.5s ease; }
+
+.sb-nav { flex: 1; overflow-y: auto; padding: 0.5rem 0; }
+.sb-nav::-webkit-scrollbar { width: 3px; }
+.sb-nav::-webkit-scrollbar-thumb { background: var(--grey2); border-radius: 99px; }
+.sb-section { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--grey); padding: 0.6rem 1.25rem 0.2rem; }
+.sb-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0.55rem 1.25rem; cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: all 0.15s;
+}
+[dir="rtl"] .sb-item { border-left: none; border-right: 3px solid transparent; }
+.sb-item:hover { background: rgba(255,255,255,0.04); }
+.sb-item.active { background: rgba(0,212,240,0.08); border-left-color: var(--cyan); }
+[dir="rtl"] .sb-item.active { border-left-color: transparent; border-right-color: var(--cyan); }
+.sb-item.done .nb-dot { background: var(--green); }
+.sb-item.active .nb-dot { background: var(--cyan); box-shadow: 0 0 8px rgba(0,212,240,0.6); }
+.nb-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--grey2); flex-shrink: 0; transition: all 0.2s; }
+.nb-body { flex: 1; min-width: 0; }
+.nb-title { font-size: 12.5px; font-weight: 500; color: rgba(239,242,248,0.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb-item.active .nb-title { color: var(--white); font-weight: 600; }
+.nb-time { font-size: 10px; color: var(--grey); margin-top: 1px; }
+
+.sb-footer { padding: 0.875rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.06); }
+.sb-footer-row { display: flex; align-items: center; justify-content: space-between; }
+.sb-footer-txt { font-size: 11px; color: var(--grey); }
+.lang-switcher {
+  display: flex; gap: 4px;
+}
+.ls-btn {
+  font-size: 10px; font-weight: 600; padding: 3px 7px;
+  border-radius: 99px; cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent; color: var(--grey);
+  transition: all 0.15s;
+}
+.ls-btn:hover { color: var(--white); border-color: rgba(255,255,255,0.25); }
+.ls-btn.active { background: rgba(0,212,240,0.15); border-color: var(--cyan); color: var(--cyan); }
+
+/* ══ TOPBAR ══ */
+.topbar {
+  height: var(--hh); display: flex; align-items: center; justify-content: space-between;
+  padding: 0 1.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  background: rgba(8,25,46,0.85); backdrop-filter: blur(16px);
+  position: sticky; top: 0; z-index: 20; flex-shrink: 0;
+}
+.tb-left { display: flex; align-items: center; gap: 12px; }
+.tb-menu {
+  display: none; background: none; border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px; padding: 6px 8px; cursor: pointer; color: var(--grey);
+  font-size: 16px; line-height: 1;
+}
+.tb-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; }
+.tb-right { display: flex; align-items: center; gap: 8px; }
+.chip-sm {
+  font-size: 11px; font-weight: 600; padding: 3px 10px;
+  border-radius: 99px; border: 1px solid rgba(255,255,255,0.1);
+  color: var(--grey); background: rgba(255,255,255,0.03);
+}
+.chip-sm.lit { border-color: rgba(0,212,240,0.4); color: var(--cyan); background: rgba(0,212,240,0.08); }
+
+/* ══ MAIN ══ */
+.main-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.main-content {
+  flex: 1; overflow-y: auto; padding: 1.75rem;
+  scrollbar-width: thin; scrollbar-color: var(--grey2) transparent;
+}
+.main-content::-webkit-scrollbar { width: 5px; }
+.main-content::-webkit-scrollbar-thumb { background: var(--grey2); border-radius: 99px; }
+
+.page { display: none; max-width: 820px; animation: pgIn 0.3s ease; }
+.page.active { display: block; }
+@keyframes pgIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+
+/* ══════════════════════════════════════════
+   CONTENT COMPONENTS
+══════════════════════════════════════════ */
+.mod-eye { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cyan); margin-bottom: 6px; }
+.mod-h1 { font-family: 'Syne', sans-serif; font-size: clamp(22px,3vw,30px); font-weight: 800; line-height: 1.2; margin-bottom: 8px; }
+.mod-sub { font-size: 13px; color: var(--grey); line-height: 1.75; margin-bottom: 1.5rem; padding-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
+[dir="rtl"] .mod-h1 { font-family: 'Noto Kufi Arabic', sans-serif; }
+
+.card {
+  background: var(--navy2);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: var(--r);
+  padding: 1.1rem 1.35rem;
+  margin-bottom: 0.875rem;
+}
+.card-h {
+  font-family: 'Syne', sans-serif; font-size: 12.5px; font-weight: 700;
+  color: var(--white); margin-bottom: 0.65rem;
+  display: flex; align-items: center; gap: 7px;
+  letter-spacing: 0.03em;
+}
+[dir="rtl"] .card-h { font-family: 'Noto Kufi Arabic', sans-serif; }
+.card-h .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); flex-shrink: 0; }
+.card p, .card li { font-size: 13px; color: rgba(239,242,248,0.75); line-height: 1.8; }
+.card ul { padding-left: 1.25rem; }
+[dir="rtl"] .card ul { padding-left: 0; padding-right: 1.25rem; }
+
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.875rem; margin-bottom: 0.875rem; }
+.g3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.75rem; margin-bottom: 0.875rem; }
+.g4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 0.75rem; margin-bottom: 0.875rem; }
+
+.hb { border-radius: var(--r); padding: 0.875rem 1.1rem; margin-bottom: 0.65rem; border-left: 3px solid transparent; }
+[dir="rtl"] .hb { border-left: none; border-right: 3px solid transparent; }
+.hb.c  { background:rgba(0,212,240,0.08);   border-color:var(--cyan); }
+.hb.b  { background:rgba(26,111,212,0.1);   border-color:var(--blue2); }
+.hb.g  { background:rgba(29,200,122,0.1);   border-color:var(--green); }
+.hb.o  { background:rgba(245,166,35,0.1);   border-color:var(--gold); }
+.hb.r  { background:rgba(232,72,85,0.1);    border-color:var(--red); }
+.hb-t  { font-family:'Syne',sans-serif; font-size:12px; font-weight:700; margin-bottom:3px; }
+[dir="rtl"] .hb-t { font-family:'Noto Kufi Arabic',sans-serif; }
+.hb.c .hb-t { color:var(--cyan); }
+.hb.b .hb-t { color:var(--blue2); }
+.hb.g .hb-t { color:var(--green); }
+.hb.o .hb-t { color:var(--gold); }
+.hb.r .hb-t { color:var(--red); }
+.hb p { font-size:12.5px; color:rgba(239,242,248,0.7); line-height:1.65; }
+
+.hero-block {
+  background: linear-gradient(135deg, rgba(0,212,240,0.07), rgba(26,111,212,0.07));
+  border: 1px solid rgba(0,212,240,0.15);
+  border-radius: 16px; padding: 1.75rem;
+  margin-bottom: 1.25rem; position: relative; overflow: hidden;
+}
+.hero-block::before {
+  content: 'LEAN';
+  position: absolute; right: -5px; top: -15px;
+  font-family: 'Syne', sans-serif; font-size: 110px; font-weight: 800;
+  color: rgba(0,212,240,0.04); line-height: 1; pointer-events: none;
+}
+[dir="rtl"] .hero-block::before { right: auto; left: -5px; }
+.hero-eye { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cyan); margin-bottom: 6px; }
+.hero-title { font-family:'Syne',sans-serif; font-size:clamp(24px,4vw,34px); font-weight:800; line-height:1.15; margin-bottom:8px; }
+[dir="rtl"] .hero-title { font-family:'Noto Kufi Arabic',sans-serif; }
+.hero-desc { font-size:13px; color:var(--grey); line-height:1.75; max-width:460px; }
+.chips { display:flex; gap:7px; flex-wrap:wrap; margin-top:0.875rem; }
+.chip { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; padding:4px 10px; border-radius:99px; letter-spacing:0.03em; }
+.chip.c { background:rgba(0,212,240,0.12); color:var(--cyan); border:1px solid rgba(0,212,240,0.25); }
+.chip.g { background:rgba(29,200,122,0.12); color:var(--green); border:1px solid rgba(29,200,122,0.25); }
+.chip.o { background:rgba(245,166,35,0.12); color:var(--gold); border:1px solid rgba(245,166,35,0.25); }
+.chip.r { background:rgba(232,72,85,0.12); color:var(--red); border:1px solid rgba(232,72,85,0.25); }
+
+/* Step flow */
+.sf { display:flex; align-items:center; gap:7px; flex-wrap:wrap; margin:0.65rem 0; }
+.sb { padding:7px 14px; border-radius:8px; font-family:'Syne',sans-serif; font-size:11.5px; font-weight:700; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:var(--white); text-align:center; }
+.sb.c { background:rgba(0,212,240,0.13); border-color:rgba(0,212,240,0.35); color:var(--cyan); }
+.sb.g { background:rgba(29,200,122,0.13); border-color:rgba(29,200,122,0.35); color:var(--green); }
+.sb.o { background:rgba(245,166,35,0.13); border-color:rgba(245,166,35,0.35); color:var(--gold); }
+.sb.r { background:rgba(232,72,85,0.13); border-color:rgba(232,72,85,0.35); color:var(--red); }
+.sa { color:var(--grey); font-size:13px; }
+
+/* Value bars */
+.vbar-wrap { margin-bottom:0.875rem; }
+.vbar-lbl { font-size:11.5px; color:var(--grey); display:flex; justify-content:space-between; margin-bottom:4px; }
+.vbar-lbl span:first-child { font-weight:500; color:rgba(239,242,248,0.85); }
+.vbar-track { height:30px; display:flex; border-radius:8px; overflow:hidden; border:1px solid rgba(255,255,255,0.06); }
+.vb-a { background:rgba(29,200,122,0.3); display:flex; align-items:center; justify-content:center; font-size:9.5px; font-weight:700; color:var(--green); letter-spacing:0.05em; transition:width 0.5s ease; }
+.vb-n { background:rgba(245,166,35,0.22); display:flex; align-items:center; justify-content:center; font-size:9.5px; font-weight:700; color:var(--gold); letter-spacing:0.05em; transition:width 0.5s ease; }
+.vb-w { background:rgba(232,72,85,0.22); display:flex; align-items:center; justify-content:center; font-size:9.5px; font-weight:700; color:var(--red); letter-spacing:0.05em; transition:width 0.5s ease; }
+
+/* Legend */
+.legend { display:flex; gap:12px; flex-wrap:wrap; margin:0.5rem 0; }
+.leg-i { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--grey); }
+.leg-d { width:8px; height:8px; border-radius:2px; }
+
+/* Sliders */
+.sl-row { display:flex; align-items:center; gap:10px; margin-bottom:0.5rem; }
+.sl-lbl { font-size:11.5px; color:var(--grey); width:48px; flex-shrink:0; }
+[dir="rtl"] .sl-lbl { text-align:right; }
+input[type=range] {
+  flex:1; -webkit-appearance:none; height:3px;
+  background:var(--grey2); border-radius:99px; outline:none; cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance:none; width:14px; height:14px; border-radius:50%;
+  background:var(--cyan); cursor:pointer; box-shadow:0 0 6px rgba(0,212,240,0.5);
+}
+.sl-val { font-family:'Syne',sans-serif; font-size:12px; font-weight:700; color:var(--white); width:34px; text-align:right; }
+
+/* Waste grid */
+.waste-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(118px,1fr)); gap:0.65rem; margin-bottom:0.875rem; }
+.waste-card {
+  background:var(--navy2); border:1px solid rgba(255,255,255,0.07);
+  border-radius:var(--r); padding:0.875rem 0.75rem; cursor:pointer;
+  transition:all 0.2s; text-align:center;
+}
+.waste-card:hover { border-color:rgba(0,212,240,0.4); background:rgba(0,212,240,0.06); transform:translateY(-2px); }
+.waste-card.sel { border-color:var(--cyan); background:rgba(0,212,240,0.1); box-shadow:0 0 16px rgba(0,212,240,0.12); }
+.wc-icon { font-size:24px; margin-bottom:5px; }
+.wc-name { font-family:'Syne',sans-serif; font-size:11px; font-weight:700; color:var(--white); }
+.wc-detail { font-size:11px; color:var(--grey); margin-top:7px; line-height:1.55; display:none; text-align:left; }
+[dir="rtl"] .wc-detail { text-align:right; }
+.waste-card.sel .wc-detail { display:block; }
+
+/* Stats */
+.stat-row { display:flex; gap:0.65rem; flex-wrap:wrap; margin-bottom:0.875rem; }
+.stat-c { flex:1; min-width:80px; background:var(--navy2); border:1px solid rgba(255,255,255,0.07); border-radius:var(--r); padding:0.875rem; text-align:center; }
+.sv { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; margin-bottom:2px; }
+.sl { font-size:10.5px; color:var(--grey); }
+.sv.c { color:var(--cyan); } .sv.g { color:var(--green); } .sv.o { color:var(--gold); } .sv.r { color:var(--red); }
+
+/* VS compare */
+.vs { display:flex; border-radius:var(--r); overflow:hidden; border:1px solid rgba(255,255,255,0.06); margin-bottom:0.875rem; }
+.vs-l { flex:1; background:rgba(26,111,212,0.1); padding:1rem; }
+.vs-r { flex:1; background:rgba(29,200,122,0.1); padding:1rem; border-left:1px solid rgba(255,255,255,0.06); }
+[dir="rtl"] .vs-r { border-left:none; border-right:1px solid rgba(255,255,255,0.06); }
+.vs-h { font-family:'Syne',sans-serif; font-size:12px; font-weight:700; margin-bottom:4px; }
+.vs-l .vs-h { color:var(--blue2); }
+.vs-r .vs-h { color:var(--green); }
+.vs-b { font-size:12px; color:rgba(239,242,248,0.65); line-height:1.6; }
+
+/* Timeline */
+.tl { border-left:2px solid var(--grey2); padding-left:1.1rem; margin-left:0.5rem; }
+[dir="rtl"] .tl { border-left:none; border-right:2px solid var(--grey2); padding-left:0; padding-right:1.1rem; margin-left:0; margin-right:0.5rem; }
+.tl-i { position:relative; padding-bottom:0.875rem; }
+.tl-i::before {
+  content:''; position:absolute; left:-1.42rem; top:4px;
+  width:9px; height:9px; border-radius:50%;
+  background:var(--cyan); border:2px solid var(--navy2);
+  box-shadow:0 0 6px rgba(0,212,240,0.45);
+}
+[dir="rtl"] .tl-i::before { left:auto; right:-1.42rem; }
+.tl-i:last-child { padding-bottom:0; }
+.tl-lbl { font-family:'Syne',sans-serif; font-size:11px; font-weight:700; color:var(--cyan); margin-bottom:2px; }
+.tl-txt { font-size:12.5px; color:var(--grey); }
+
+/* Table */
+.ltable { width:100%; border-collapse:collapse; font-size:12.5px; }
+.ltable th { text-align:left; padding:9px 11px; border-bottom:1px solid rgba(255,255,255,0.08); font-family:'Syne',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:var(--grey); }
+[dir="rtl"] .ltable th { text-align:right; }
+.ltable td { padding:9px 11px; border-bottom:1px solid rgba(255,255,255,0.04); color:rgba(239,242,248,0.8); }
+.ltable tr:last-child td { border-bottom:none; }
+.ltable tr:hover td { background:rgba(255,255,255,0.02); }
+.ltable .hl { color:var(--cyan); font-weight:500; }
+
+/* Buttons */
+.btn { display:inline-flex; align-items:center; gap:6px; padding:9px 18px; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.15s; border:none; }
+.btn-o { background:transparent; border:1px solid rgba(255,255,255,0.14); color:var(--grey); }
+.btn-o:hover { border-color:rgba(255,255,255,0.28); color:var(--white); }
+.btn-p { background:var(--blue2); color:var(--white); }
+.btn-p:hover { background:#3090ff; }
+.btn-c { background:rgba(0,212,240,0.12); border:1px solid rgba(0,212,240,0.35); color:var(--cyan); }
+.btn-c:hover { background:rgba(0,212,240,0.22); }
+.btn:disabled { opacity:0.35; pointer-events:none; }
+
+/* Nav footer */
+.nf { display:flex; justify-content:space-between; align-items:center; padding:1.25rem 0 0.5rem; border-top:1px solid rgba(255,255,255,0.06); margin-top:0.875rem; }
+.nf-ctr { font-size:11.5px; color:var(--grey); }
+
+/* Exercise */
+.ex-box { background:rgba(245,166,35,0.06); border:1px solid rgba(245,166,35,0.22); border-radius:var(--r); padding:1.1rem 1.35rem; margin-bottom:0.875rem; }
+.ex-title { font-family:'Syne',sans-serif; font-size:11px; font-weight:700; color:var(--gold); margin-bottom:5px; letter-spacing:0.04em; }
+.ex-body { font-size:12.5px; color:rgba(239,242,248,0.75); line-height:1.75; }
+
+/* Quiz */
+.qb { margin-bottom:1.1rem; }
+.q-num { font-family:'Syne',sans-serif; font-size:9.5px; font-weight:800; letter-spacing:0.12em; color:var(--cyan); margin-bottom:3px; }
+.q-txt { font-size:13.5px; font-weight:500; color:var(--white); margin-bottom:0.65rem; line-height:1.5; }
+.q-opts { display:flex; flex-direction:column; gap:5px; }
+.q-opt {
+  padding:9px 13px; border-radius:8px; border:1px solid rgba(255,255,255,0.09);
+  background:rgba(255,255,255,0.02); cursor:pointer; font-size:12.5px;
+  color:rgba(239,242,248,0.78); text-align:left; transition:all 0.14s;
+  font-family:'DM Sans',sans-serif;
+}
+[dir="rtl"] .q-opt { text-align:right; }
+.q-opt:hover:not(:disabled) { border-color:rgba(0,212,240,0.38); background:rgba(0,212,240,0.06); color:var(--white); }
+.q-opt.ok { background:rgba(29,200,122,0.18); border-color:var(--green); color:var(--green); }
+.q-opt.ko { background:rgba(232,72,85,0.18); border-color:var(--red); color:var(--red); }
+.q-fb { font-size:11.5px; padding:7px 11px; border-radius:7px; margin-top:5px; display:none; line-height:1.5; }
+.q-fb.show { display:block; }
+.q-fb.ok { background:rgba(29,200,122,0.12); color:var(--green); border:1px solid rgba(29,200,122,0.28); }
+.q-fb.ko { background:rgba(232,72,85,0.12); color:var(--red); border:1px solid rgba(232,72,85,0.28); }
+
+/* Score */
+.sc-card { display:none; background:linear-gradient(135deg,rgba(0,212,240,0.09),rgba(26,111,212,0.09)); border:1px solid rgba(0,212,240,0.28); border-radius:16px; padding:1.75rem; text-align:center; margin-top:1.25rem; }
+.sc-card.show { display:block; animation:pgIn 0.4s ease; }
+.sc-big { font-family:'Syne',sans-serif; font-size:52px; font-weight:800; color:var(--cyan); line-height:1; margin-bottom:4px; }
+.sc-sub { font-size:13px; color:var(--grey); margin-bottom:0.875rem; }
+.sc-lv { font-family:'Syne',sans-serif; font-size:19px; font-weight:800; margin-bottom:0.875rem; }
+
+/* Guide */
+.guide-section { margin-bottom:1.5rem; }
+.guide-h2 { font-family:'Syne',sans-serif; font-size:16px; font-weight:800; color:var(--white); margin-bottom:0.65rem; padding-bottom:0.5rem; border-bottom:1px solid rgba(255,255,255,0.07); }
+[dir="rtl"] .guide-h2 { font-family:'Noto Kufi Arabic',sans-serif; }
+.guide-step { display:flex; gap:12px; margin-bottom:0.75rem; align-items:flex-start; }
+[dir="rtl"] .guide-step { flex-direction:row-reverse; }
+.gs-num { width:28px; height:28px; border-radius:50%; background:rgba(0,212,240,0.15); border:1px solid rgba(0,212,240,0.35); display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-size:11px; font-weight:800; color:var(--cyan); flex-shrink:0; margin-top:1px; }
+.gs-body p { font-size:13px; color:rgba(239,242,248,0.8); line-height:1.7; }
+.gs-title { font-weight:600; color:var(--white); font-size:13px; margin-bottom:2px; }
+
+.shortcut-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; }
+.sc-item { display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--navy3); border-radius:8px; }
+.sc-key { font-family:'Syne',sans-serif; font-size:10px; font-weight:700; color:var(--cyan); background:rgba(0,212,240,0.1); border:1px solid rgba(0,212,240,0.25); border-radius:5px; padding:2px 7px; white-space:nowrap; }
+.sc-desc { font-size:12px; color:var(--grey); }
+
+/* ══ MOBILE ══ */
+@media (max-width: 680px) {
+  :root { --sw: 0px; }
+  .sidebar { position:fixed; left:-260px; top:0; bottom:0; z-index:50; width:260px; transition:left 0.25s ease; }
+  [dir="rtl"] .sidebar { left:auto; right:-260px; transition:right 0.25s ease; }
+  .sidebar.open { left:0; }
+  [dir="rtl"] .sidebar.open { right:0; left:auto; }
+  .tb-menu { display:block; }
+  .main-content { padding:1rem; }
+  .g2,.g3,.g4 { grid-template-columns:1fr; }
+  .vs { flex-direction:column; }
+  .vs-r { border-left:none; border-top:1px solid rgba(255,255,255,0.06); }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     LANGUAGE SPLASH
+══════════════════════════════════════════ -->
+<div id="lang-splash">
+  <div class="splash-inner">
+    <div class="splash-logo">Lean Academy · ENSA Oujda</div>
+    <div class="splash-title">Choose Your Language</div>
+    <div class="splash-sub" id="splash-sub">Select your preferred language to start the interactive course on Lean Principles.</div>
+
+    <div class="lang-grid">
+      <div class="lang-btn" onclick="selectLang('ar')">
+        <span class="lang-flag">🇲🇦</span>
+        <span class="lang-name">العربية</span>
+        <span class="lang-native ar">اختر اللغة</span>
+      </div>
+      <div class="lang-btn" onclick="selectLang('en')">
+        <span class="lang-flag">🇬🇧</span>
+        <span class="lang-name">English</span>
+        <span class="lang-native">Choose language</span>
+      </div>
+      <div class="lang-btn" onclick="selectLang('fr')">
+        <span class="lang-flag">🇫🇷</span>
+        <span class="lang-name">Français</span>
+        <span class="lang-native">Choisir la langue</span>
+      </div>
+    </div>
+
+    <button class="start-btn" id="start-btn" onclick="launchApp()">
+      <span id="start-lbl">Select a language to continue</span>
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     APP
+══════════════════════════════════════════ -->
+<div id="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-brand" id="sb-brand">Lean Academy</div>
+      <div class="sb-sub" id="sb-sub">ENSA Oujda · 2h</div>
+    </div>
+    <div class="sb-prog">
+      <div class="prog-lbl">
+        <span id="prog-lbl-txt">Progress</span>
+        <span id="prog-pct">0%</span>
+      </div>
+      <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+    </div>
+    <nav class="sb-nav" id="sb-nav"></nav>
+    <div class="sb-footer">
+      <div class="sb-footer-row">
+        <span class="sb-footer-txt" id="sb-ft"></span>
+        <div class="lang-switcher">
+          <button class="ls-btn" onclick="switchLang('ar')">ع</button>
+          <button class="ls-btn" onclick="switchLang('en')">EN</button>
+          <button class="ls-btn" onclick="switchLang('fr')">FR</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-wrap">
+    <div class="topbar">
+      <div class="tb-left">
+        <button class="tb-menu" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+        <div class="tb-title" id="tb-title"></div>
+      </div>
+      <div class="tb-right">
+        <span class="chip-sm" id="tb-dur">120 min</span>
+        <span class="chip-sm lit" id="tb-mod">1/7</span>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div id="pages-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════
+   TRANSLATIONS
+══════════════════════════════════════════ */
+const T = {
+  fr: {
+    dir: 'ltr',
+    splashSub: "Sélectionnez votre langue pour démarrer le cours interactif sur les Principes Lean.",
+    startLbl: "Commencer le cours →",
+    brandSub: "ENSA Oujda · 2h",
+    progLbl: "Progression",
+    modLabel: "Module",
+    prev: "← Précédent",
+    next: "Suivant →",
+    startQuiz: "Quiz Final →",
+    reviewCourse: "Revoir le cours depuis le début",
+    outOf: "sur 10",
+    correct: "✓ Correct ! ",
+    incorrect: "✗ Incorrect. ",
+    showAnswer: "Voir la réponse ↓",
+    hideAnswer: "Masquer la réponse ↑",
+    navTitles: ["Introduction","Valeur Ajoutée","7 Gaspillages","Lean 6 Sigma","État d'Esprit","Quiz Final","Guide Utilisateur"],
+    navTimes: ["0:00–0:15","0:15–0:45","0:45–1:20","1:20–1:45","1:45–2:00","10 questions","Référence"],
+    navSections: ["Introduction","Modules","Évaluation","Aide"],
+    tbTitles: [
+      "Introduction — Qu'est-ce que le Lean ?",
+      "La Valeur Ajoutée — VA / NVA / Gaspillage",
+      "Les 7 Gaspillages — MUDA / MURA / MURI",
+      "Lean 6 Sigma — Vitesse + Qualité",
+      "Lean — Un État d'Esprit (Kaizen, PDCA)",
+      "Quiz Final — Évaluez vos connaissances",
+      "Guide Utilisateur — Comment utiliser l'app"
+    ],
+    scores: [
+      {min:9, lbl:"🏆 Expert Lean", col:"#1DC87A"},
+      {min:7, lbl:"✅ Bon niveau", col:"#00D4F0"},
+      {min:5, lbl:"📈 En progression", col:"#F5A623"},
+      {min:0, lbl:"📚 À revoir", col:"#E84855"}
+    ],
+    scoreOf: "/10",
+  },
+  en: {
+    dir: 'ltr',
+    splashSub: "Select your preferred language to start the interactive course on Lean Principles.",
+    startLbl: "Start the course →",
+    brandSub: "ENSA Oujda · 2h",
+    progLbl: "Progress",
+    modLabel: "Module",
+    prev: "← Previous",
+    next: "Next →",
+    startQuiz: "Final Quiz →",
+    reviewCourse: "Review the course from the beginning",
+    outOf: "out of 10",
+    correct: "✓ Correct! ",
+    incorrect: "✗ Incorrect. ",
+    showAnswer: "Show answer ↓",
+    hideAnswer: "Hide answer ↑",
+    navTitles: ["Introduction","Value Added","7 Wastes","Lean 6 Sigma","Lean Mindset","Final Quiz","User Guide"],
+    navTimes: ["0:00–0:15","0:15–0:45","0:45–1:20","1:20–1:45","1:45–2:00","10 questions","Reference"],
+    navSections: ["Introduction","Modules","Assessment","Help"],
+    tbTitles: [
+      "Introduction — What is Lean?",
+      "Value Added — VA / NVA / Waste",
+      "7 Wastes — MUDA / MURA / MURI",
+      "Lean 6 Sigma — Speed + Quality",
+      "Lean — A Mindset (Kaizen, PDCA)",
+      "Final Quiz — Test Your Knowledge",
+      "User Guide — How to use this app"
+    ],
+    scores: [
+      {min:9, lbl:"🏆 Lean Expert", col:"#1DC87A"},
+      {min:7, lbl:"✅ Good level", col:"#00D4F0"},
+      {min:5, lbl:"📈 Progressing", col:"#F5A623"},
+      {min:0, lbl:"📚 Needs review", col:"#E84855"}
+    ],
+    scoreOf: "/10",
+  },
+  ar: {
+    dir: 'rtl',
+    splashSub: "اختر لغتك المفضلة لبدء الدورة التفاعلية حول مبادئ اللين.",
+    startLbl: "ابدأ الدورة ←",
+    brandSub: "ENSA وجدة · ساعتان",
+    progLbl: "التقدم",
+    modLabel: "الوحدة",
+    prev: "السابق →",
+    next: "← التالي",
+    startQuiz: "الاختبار النهائي ←",
+    reviewCourse: "مراجعة الدورة من البداية",
+    outOf: "من 10",
+    correct: "✓ صحيح! ",
+    incorrect: "✗ خطأ. ",
+    showAnswer: "عرض الإجابة ↓",
+    hideAnswer: "إخفاء الإجابة ↑",
+    navTitles: ["مقدمة","القيمة المضافة","7 مهدرات","لين 6 سيغما","عقلية اللين","الاختبار النهائي","دليل المستخدم"],
+    navTimes: ["0:00–0:15","0:15–0:45","0:45–1:20","1:20–1:45","1:45–2:00","10 أسئلة","مرجع"],
+    navSections: ["مقدمة","الوحدات","التقييم","مساعدة"],
+    tbTitles: [
+      "مقدمة — ما هو اللين؟",
+      "القيمة المضافة — VA / NVA / هدر",
+      "7 مهدرات — MUDA / MURA / MURI",
+      "لين 6 سيغما — السرعة + الجودة",
+      "اللين — عقلية (كايزن، PDCA)",
+      "الاختبار النهائي — اختبر معلوماتك",
+      "دليل المستخدم — كيفية استخدام التطبيق"
+    ],
+    scores: [
+      {min:9, lbl:"🏆 خبير لين", col:"#1DC87A"},
+      {min:7, lbl:"✅ مستوى جيد", col:"#00D4F0"},
+      {min:5, lbl:"📈 في تقدم", col:"#F5A623"},
+      {min:0, lbl:"📚 يحتاج مراجعة", col:"#E84855"}
+    ],
+    scoreOf: "/10",
+  }
+};
+
+/* ══════════════════════════════════════════
+   PAGE CONTENT (multilingual)
+══════════════════════════════════════════ */
+const CONTENT = {
+  fr: {
+    p0: {
+      eye:"Module 1 · 0:00 — 0:15 min",
+      h:"Qu'est-ce que le Lean ?",
+      sub:"Une philosophie de management née chez Toyota, visant à éliminer les gaspillages et maximiser la valeur client.",
+      hero:{eye:"Module 1 · Introduction",t:"Qu'est-ce que le Lean ?",d:"Une philosophie de management née chez Toyota dans les années 1950, formalisée par Womack & Jones dans The Machine That Changed the World (1990)."},
+      c1t:"Origine",c1p:"Développé par Toyota (TPS — Toyota Production System) dans les années 1950. Formalisé par Womack & Jones en 1990.",
+      c2t:"Objectif central",c2p:"Réduire les gaspillages (MUDA) et augmenter la valeur ajoutée pour le client, grâce à l'amélioration continue (Kaizen).",
+      sfLbl:"Les 5 Principes Lean — Womack & Jones",
+      sf:["1. Valeur","2. Flux de valeur","3. Flux tiré","4. Flux continu","5. Perfection"],
+      hb1t:"Lean seul",hb1p:"Réduit gaspillages et lead time. Objectif : −25% de temps de cycle.",
+      hb2t:"6 Sigma seul",hb2p:"Réduit variabilité et défauts. Objectif : −99% des défauts.",
+      hb3t:"Lean 6 Sigma",hb3p:"Combine les deux : rapidité + qualité. Satisfaction client et réduction des coûts.",
+      planTitle:"Plan du cours — 2 heures",
+      plan:[
+        {lbl:"0:00–0:15",txt:"Module 1 · Introduction — Qu'est-ce que le Lean ?"},
+        {lbl:"0:15–0:45",txt:"Module 2 · La Valeur Ajoutée — VA / NVA / Gaspillage"},
+        {lbl:"0:45–1:20",txt:"Module 3 · Les 7 Gaspillages MUDA — 3 familles d'inefficacités"},
+        {lbl:"1:20–1:45",txt:"Module 4 · Lean 6 Sigma — Réduction Lead Time + Élimination Défauts"},
+        {lbl:"1:45–2:00",txt:"Module 5 · Lean — Un État d'Esprit (Kaizen, 5S, culture) + Quiz"},
+      ],
+      chips:["120 min","5 modules","Quiz final","Interactif"],
+    },
+    p1: {
+      eye:"Module 2 · 0:15 — 0:45 min",h:"La Valeur Ajoutée",sub:"Comprendre ce que le client valorise réellement — et tout ce qui ne l'est pas.",
+      defT:"Définition : qu'est-ce que la Valeur ?",defP:"La valeur est définie <strong>uniquement par le client</strong>. C'est ce pour quoi le client est prêt à payer. Tout le reste est potentiellement un gaspillage à éliminer.",
+      barsT:"Les 3 catégories d'activités",
+      bars:[
+        {lbl:"Méthode Standard (0% Lean)",info:"5% VA · 35% NVA · 60% Gaspillage",va:5,nva:35,w:60},
+        {lbl:"Amélioration Lean-6S",info:"20% VA · 52% NVA · 28% Gaspillage",va:20,nva:52,w:28},
+        {lbl:"Transformation Évolution",info:"42% VA · 50% NVA · 8% Gaspillage",va:42,nva:50,w:8},
+      ],
+      leg:["Valeur Ajoutée (VA)","Non Valeur Ajoutée (NVA)","Gaspillage pur"],
+      hb1t:"Valeur Ajoutée (VA)",hb1p:"Activités qui transforment le produit et pour lesquelles le client paie. Ex : usinage, assemblage, traitement thermique.",
+      hb2t:"Non Valeur Ajoutée (NVA)",hb2p:"Nécessaires mais sans valeur directe. Ex : contrôles réglementaires, transport interne, setups machines.",
+      hb3t:"Gaspillage pur",hb3p:"N'ajoutent aucune valeur. À éliminer en priorité. Ex : attentes, déplacements inutiles, surproduction.",
+      simT:"Simulateur interactif — ajustez votre processus",simInfo:"Gaspillage : ",
+      keyT:"Chiffre clé",keyP:"Moins de 10% du temps est consacré à la VA dans un processus standard. Le Lean-6S vise à porter ce ratio à 40–60%.",
+    },
+    p2: {
+      eye:"Module 3 · 0:45 — 1:20 min",h:"Les 7 Gaspillages — MUDA",sub:"Cliquez sur chaque gaspillage pour découvrir sa définition et des exemples concrets.",
+      famT:"Les 3 familles d'inefficacités",
+      fam:[
+        {t:"MUDA = Gaspillages",p:"Activités consommant des ressources sans créer de valeur pour le client.",cl:"r"},
+        {t:"MURA = Variation",p:"Irrégularités dans le flux de production. Alternance surcharge / sous-charge.",cl:"o"},
+        {t:"MURI = Surcharge",p:"Demandes excessives sur personnes ou équipements. Usure prématurée.",cl:"b"},
+      ],
+      clickHint:"Les 7 MUDA — cliquez pour explorer",
+      wastes:[
+        {icon:"🚚",name:"Transport",detail:"Déplacement inutile de pièces ou matériaux. Ex : acheminer des composants d'un bout à l'autre de l'usine sans nécessité."},
+        {icon:"📦",name:"Inventaire",detail:"Stock excessif (matières, en-cours, produits finis). Immobilise du capital et masque les problèmes."},
+        {icon:"🏃",name:"Motion",detail:"Mouvements inutiles des opérateurs. Ex : chercher des outils, se pencher, marcher pour aller chercher une pièce."},
+        {icon:"⏳",name:"Attente",detail:"Temps d'attente (machine, information, matière). Souvent le plus visible dans les processus de service."},
+        {icon:"⚙️",name:"Sur-traitement",detail:"Opérations superflues non demandées par le client. Ex : polissage d'une surface jamais vue, doubles vérifications."},
+        {icon:"🏭",name:"Surproduction",detail:"Produire plus que la demande client. PIRE gaspillage selon Ohno : génère tous les autres."},
+        {icon:"❌",name:"Défauts",detail:"Non-conformités, rebuts, retouches. Coûteux en temps, matières et réputation. Éliminer à la source (Poka-Yoke)."},
+      ],
+      impT:"Impact de l'élimination des gaspillages",
+      imp:[{v:"−25%",l:"Lead Time",cl:"g"},{v:"+35%",l:"Productivité",cl:"c"},{v:"−40%",l:"Surface atelier",cl:"o"},{v:"−99%",l:"Défauts (6σ)",cl:"r"}],
+      exT:"Exercice pratique — Identifiez les MUDA",
+      exP:"Dans une clinique hospitalière : un patient attend 45 min avant consultation, le dossier papier est transporté 3 fois entre services, et le médecin refait une anamnèse déjà effectuée par l'infirmière.<br><strong>Question :</strong> Identifiez les 3 MUDA correspondants.",
+      exAns:"<strong>1. Attente (Waiting)</strong> — 45 min d'attente sans valeur.<br><strong>2. Transport</strong> — Dossier déplacé 3 fois sans nécessité.<br><strong>3. Sur-traitement (Over-processing)</strong> — Double anamnèse inutile.",
+    },
+    p3: {
+      eye:"Module 4 · 1:20 — 1:45 min",h:"Lean 6 Sigma",sub:"Combiner la réduction des gaspillages (Lean) et de la variabilité (6 Sigma) pour l'excellence opérationnelle.",
+      vsL:{t:"Lean seul",p:"Rapide mais pas toujours précis. Réduit le lead time et élimine les gaspillages. Moins efficace sur la variabilité statistique."},
+      vsR:{t:"Lean + 6 Sigma",p:"Rapide ET précis. Lead time −25%, défauts −99%. Satisfaction client maximale et réduction des coûts."},
+      triT:"Le triangle Qualité — Coût — Délai",triS:"Le Lean 6 Sigma optimise simultanément la qualité, le coût et les délais — la triade de satisfaction client.",
+      lvlT:"Les 3 niveaux de transformation",
+      lvls:[
+        {t:"1. Méthode Standard (0% Lean)",p:"VA=5%, NVA=35%, Gaspillage=60%. Lead time élevé, nombreux défauts, insatisfaction client.",cl:"o"},
+        {t:"2. Amélioration Lean-6S",p:"VA=20%, NVA=52%, Gaspillage=28%. Lead time −25%, taux de défauts en chute. Profitabilité en hausse.",cl:"b"},
+        {t:"3. Transformation (Évolution)",p:"VA=42%, NVA=50%, Gaspillage=8%. Compétitivité maximale. Possibilité de baisser les prix ou d'augmenter les marges.",cl:"g"},
+      ],
+      kpiT:"Indicateurs Lean 6 Sigma clés",
+      kpis:[
+        ["Lead Time","Temps commande → livraison","Réduire de 25%+"],
+        ["Takt Time","Temps disponible / Demande client","Synchroniser production"],
+        ["DPMO","Défauts / (unités × opp.) × 10⁶","< 6 210 (4σ)"],
+        ["OEE","Disponibilité × Performance × Qualité","> 85%"],
+        ["% VA","Temps VA / Lead Time total","> 40%"],
+      ],
+      kpiH:["Indicateur","Formule / Définition","Objectif"],
+      gaussT:"Distribution Normale — Courbe de Gauss",
+      gaussSub:"Cliquez sur chaque zone sigma pour explorer ses caractéristiques",
+      gaussSliderLbl:"Niveau sigma actuel :",
+      sigmaTableH:["Niveau σ","DPMO","Rendement","Interprétation"],
+      sigmaRows:[
+        ["1σ","691 462","30,85%","Inacceptable"],
+        ["2σ","308 538","69,15%","Faible"],
+        ["3σ","66 807","93,32%","Moyen"],
+        ["4σ","6 210","99,38%","Bon"],
+        ["5σ","233","99,977%","Excellent"],
+        ["6σ","3,4","99,9997%","Référence Six Sigma"],
+      ],
+    },
+    p4: {
+      eye:"Module 5 · 1:45 — 2:00 min",h:"Lean — Un État d'Esprit",sub:"Au-delà des outils : la culture d'amélioration continue qui transforme durablement une organisation.",
+      kaiT:"Le Kaizen — amélioration continue",kaiP:"<strong>Kaizen</strong> (改善) signifie \"changer pour le mieux\" en japonais. C'est un état d'esprit, une philosophie de petites améliorations quotidiennes plutôt que de grandes transformations rares.",
+      chips:["Chaque employé est acteur","Petits pas quotidiens","Aucune idée trop petite","Éliminer avant d'automatiser"],
+      toolT:"Les outils Lean principaux",
+      tools:[
+        {lbl:"5S",txt:"Seiri, Seiton, Seiso, Seiketsu, Shitsuke — Organisation et propreté de l'espace de travail"},
+        {lbl:"VSM",txt:"Value Stream Mapping — Cartographie des flux de valeur pour identifier les gaspillages"},
+        {lbl:"Poka-Yoke",txt:"Dispositifs anti-erreur — Rendre les erreurs impossibles ou immédiatement détectables"},
+        {lbl:"Kanban",txt:"Pilotage par la demande — Flux tiré, production à la commande exacte"},
+        {lbl:"SMED",txt:"Single Minute Exchange of Die — Réduction des temps de changement de série"},
+      ],
+      mindT:"L'état d'esprit en 4 attitudes",
+      mind:[
+        {t:"Penser valeur client",p:"Se demander : cette activité crée-t-elle de la valeur pour le client ?",cl:"g"},
+        {t:"Voir les gaspillages",p:"Aller sur le terrain (Gemba Walk). Observer les flux réels, pas théoriques.",cl:"b"},
+        {t:"Agir collectivement",p:"Impliquer toute l'équipe. Les meilleures idées viennent des opérateurs.",cl:"o"},
+        {t:"Viser la perfection",p:"L'amélioration n'a pas de fin. Chaque victoire ouvre de nouvelles opportunités.",cl:"r"},
+      ],
+      pdcaT:"Le cycle PDCA — Roue de Deming",
+      pdca:["Plan|Planifier","Do|Exécuter","Check|Vérifier","Act|Ajuster"],
+      pdcaS:"Le PDCA est le moteur de l'amélioration continue. On ne finit jamais un PDCA — on recommence à un niveau supérieur.",
+    },
+    quiz: {
+      eye:"Évaluation Finale · 10 Questions",h:"Quiz — Testez vos Connaissances",sub:"Cliquez sur la réponse correcte. La correction s'affiche immédiatement.",
+      qs:[
+        {q:"Que signifie MUDA en japonais ?",opts:["Amélioration continue","Gaspillage","Valeur ajoutée"],a:1,ex:"MUDA signifie Gaspillage. MURA = Variation, MURI = Surcharge."},
+        {q:"Quel est le PIRE gaspillage selon Taiichi Ohno ?",opts:["Les défauts","L'attente","La surproduction"],a:2,ex:"La surproduction génère tous les autres gaspillages : stock, transport, attente."},
+        {q:"Dans les 5S, Seiso (3ème S) signifie :",opts:["Standardiser","Nettoyer","Ranger"],a:1,ex:"Seiri=Trier, Seiton=Ranger, Seiso=Nettoyer, Seiketsu=Standardiser, Shitsuke=Respecter."},
+        {q:"% de temps consacré à la VA dans un processus standard :",opts:["35–40 %","Moins de 10 %","Environ 50 %"],a:1,ex:"Moins de 10% du temps crée de la valeur. Le reste est NVA ou gaspillage pur."},
+        {q:"Le Takt Time est égal à :",opts:["Temps de cycle machine","Temps disponible / Demande client","Lead Time − Attente"],a:1,ex:"Takt Time = Temps disponible / Demande client. Cadence la production sur le rythme client."},
+        {q:"Médecin qui refait une anamnèse déjà faite : quel MUDA ?",opts:["Inventaire","Transport","Over-processing"],a:2,ex:"Refaire une tâche déjà effectuée = Over-processing (sur-traitement inutile)."},
+        {q:"Lean 6 Sigma vise une réduction du lead time de :",opts:["99 %","25 %","50 %"],a:1,ex:"Lean vise −25% de lead time. 6 Sigma vise −99% de défauts."},
+        {q:"Kaizen signifie :",opts:["Éliminer les défauts","Flux tiré","Changer pour le mieux"],a:2,ex:"Kaizen (改善) = changer pour le mieux : amélioration continue par petits pas."},
+        {q:"La valeur est définie par :",opts:["Les ingénieurs qualité","Le client uniquement","La direction générale"],a:1,ex:"La valeur est définie uniquement par le client, pas par le producteur."},
+        {q:"OEE = ?",opts:["Qualité + Performance + Arrêts","Disponibilité × Performance × Qualité","Temps de marche / Temps total"],a:1,ex:"OEE = Disponibilité × Performance × Qualité. Objectif Lean : OEE > 85%."},
+      ],
+    },
+    guide: {
+      eye:"Aide · Référence",h:"Guide Utilisateur",sub:"Tout ce que vous devez savoir pour naviguer et tirer le meilleur parti de cette application.",
+      sections:[
+        {h:"Comment naviguer",steps:[
+          {t:"Barre latérale",p:"Cliquez sur n'importe quel module dans la barre gauche pour y accéder directement. Les modules complétés s'affichent en vert."},
+          {t:"Boutons de navigation",p:"Utilisez les boutons ← Précédent / Suivant → en bas de chaque page pour avancer dans l'ordre du cours."},
+          {t:"Barre de progression",p:"La barre en haut de la sidebar indique votre avancement global sur l'ensemble du cours."},
+          {t:"Changer de langue",p:"Cliquez sur ع / EN / FR en bas de la sidebar pour changer la langue instantanément."},
+        ]},
+        {h:"Fonctionnalités interactives",steps:[
+          {t:"Simulateur (Module 2)",p:"Déplacez les curseurs VA et NVA pour simuler l'impact d'une transformation Lean sur votre processus."},
+          {t:"Cartes MUDA cliquables (Module 3)",p:"Cliquez sur chaque gaspillage pour afficher sa définition détaillée et des exemples concrets."},
+          {t:"Exercice pratique",p:"Tentez de répondre à l'exercice avant de cliquer sur 'Voir la réponse' pour renforcer l'apprentissage."},
+          {t:"Quiz Final (Module 6)",p:"Répondez aux 10 questions. Votre score s'affiche à la fin avec un niveau d'expertise."},
+        ]},
+        {h:"Contenu du cours",steps:[
+          {t:"Module 1",p:"Introduction — Origine du Lean, 5 principes, comparaison Lean / 6 Sigma / Lean 6 Sigma."},
+          {t:"Module 2",p:"Valeur Ajoutée — VA, NVA, gaspillage pur. Simulateur interactif des 3 niveaux de transformation."},
+          {t:"Module 3",p:"7 Gaspillages MUDA — Transport, Inventaire, Motion, Attente, Sur-traitement, Surproduction, Défauts."},
+          {t:"Module 4",p:"Lean 6 Sigma — Triangle Qualité/Coût/Délai, 3 niveaux de transformation, indicateurs (DPMO, OEE, Takt Time)."},
+          {t:"Module 5",p:"État d'Esprit — Kaizen, 5S, VSM, Poka-Yoke, Kanban, SMED, cycle PDCA."},
+          {t:"Module 6",p:"Quiz Final — 10 questions couvrant tous les modules. Score et niveau d'expertise à la fin."},
+        ]},
+        {h:"Raccourcis clavier",shortcuts:[
+          {k:"→ / N","d":"Module suivant"},
+          {k:"← / P","d":"Module précédent"},
+          {k:"1–7","d":"Aller au module n°"},
+          {k:"Ctrl+L","d":"Changer de langue"},
+        ]},
+      ],
+    },
+  },
+  en: {
+    p0: {
+      eye:"Module 1 · 0:00 — 0:15 min",
+      h:"What is Lean?",
+      sub:"A management philosophy born at Toyota, aimed at eliminating waste and maximizing customer value.",
+      hero:{eye:"Module 1 · Introduction",t:"What is Lean?",d:"A management philosophy developed by Toyota in the 1950s (TPS — Toyota Production System), formalized by Womack & Jones in The Machine That Changed the World (1990)."},
+      c1t:"Origin",c1p:"Developed by Toyota (TPS) in the 1950s. Formalized by Womack & Jones in 1990.",
+      c2t:"Core objective",c2p:"Reduce waste (MUDA) and increase customer value through continuous improvement (Kaizen).",
+      sfLbl:"The 5 Lean Principles — Womack & Jones",
+      sf:["1. Value","2. Value Stream","3. Pull","4. Flow","5. Perfection"],
+      hb1t:"Lean alone",hb1p:"Reduces waste and lead time. Target: −25% cycle time.",
+      hb2t:"6 Sigma alone",hb2p:"Reduces variability and defects. Target: −99% defects.",
+      hb3t:"Lean 6 Sigma",hb3p:"Combines both: speed + quality. Customer satisfaction and cost reduction.",
+      planTitle:"Course plan — 2 hours",
+      plan:[
+        {lbl:"0:00–0:15",txt:"Module 1 · Introduction — What is Lean?"},
+        {lbl:"0:15–0:45",txt:"Module 2 · Value Added — VA / NVA / Waste"},
+        {lbl:"0:45–1:20",txt:"Module 3 · 7 MUDA Wastes — 3 families of inefficiency"},
+        {lbl:"1:20–1:45",txt:"Module 4 · Lean 6 Sigma — Lead Time Reduction + Defect Elimination"},
+        {lbl:"1:45–2:00",txt:"Module 5 · Lean Mindset (Kaizen, 5S, culture) + Quiz"},
+      ],
+      chips:["120 min","5 modules","Final quiz","Interactive"],
+    },
+    p1: {
+      eye:"Module 2 · 0:15 — 0:45 min",h:"Value Added",sub:"Understanding what the customer truly values — and what they don't.",
+      defT:"Definition: What is Value?",defP:"Value is defined <strong>only by the customer</strong>. It is what the customer is willing to pay for. Everything else is potentially waste to be eliminated.",
+      barsT:"The 3 activity categories",
+      bars:[
+        {lbl:"Standard Method (0% Lean)",info:"5% VA · 35% NVA · 60% Waste",va:5,nva:35,w:60},
+        {lbl:"Lean-6S Improvement",info:"20% VA · 52% NVA · 28% Waste",va:20,nva:52,w:28},
+        {lbl:"Transformation Evolution",info:"42% VA · 50% NVA · 8% Waste",va:42,nva:50,w:8},
+      ],
+      leg:["Value Added (VA)","Non-Value Added (NVA)","Pure Waste"],
+      hb1t:"Value Added (VA)",hb1p:"Activities that transform the product and for which the customer pays. Ex: machining, assembly, heat treatment.",
+      hb2t:"Non-Value Added (NVA)",hb2p:"Necessary but no direct value. Ex: regulatory controls, internal transport, machine setups.",
+      hb3t:"Pure Waste",hb3p:"Add no value. Eliminate first. Ex: waiting, unnecessary movements, overproduction.",
+      simT:"Interactive Simulator — adjust your process",simInfo:"Waste: ",
+      keyT:"Key figure",keyP:"Less than 10% of time is dedicated to VA in a standard process. Lean-6S aims to raise this ratio to 40–60%.",
+    },
+    p2: {
+      eye:"Module 3 · 0:45 — 1:20 min",h:"7 Wastes — MUDA",sub:"Click on each waste to discover its definition and concrete examples.",
+      famT:"The 3 families of inefficiency",
+      fam:[
+        {t:"MUDA = Waste",p:"Activities consuming resources without creating customer value.",cl:"r"},
+        {t:"MURA = Variation",p:"Irregularities in production flow. Alternating overload / underload.",cl:"o"},
+        {t:"MURI = Overburden",p:"Excessive demands on people or equipment. Premature wear.",cl:"b"},
+      ],
+      clickHint:"The 7 MUDA — click to explore",
+      wastes:[
+        {icon:"🚚",name:"Transport",detail:"Unnecessary movement of parts or materials. Ex: moving components across the factory floor without need."},
+        {icon:"📦",name:"Inventory",detail:"Excessive stock (materials, WIP, finished goods). Ties up capital and hides problems."},
+        {icon:"🏃",name:"Motion",detail:"Unnecessary operator movements. Ex: searching for tools, bending, walking to fetch parts."},
+        {icon:"⏳",name:"Waiting",detail:"Wait time (machine, information, material). Often the most visible waste in service processes."},
+        {icon:"⚙️",name:"Over-processing",detail:"Unnecessary operations not requested by the customer. Ex: polishing an unseen surface, double checks."},
+        {icon:"🏭",name:"Overproduction",detail:"Producing more than customer demand. WORST waste per Ohno: it generates all others."},
+        {icon:"❌",name:"Defects",detail:"Non-conformities, scrap, rework. Costly in time, materials and reputation. Eliminate at source (Poka-Yoke)."},
+      ],
+      impT:"Impact of waste elimination",
+      imp:[{v:"−25%",l:"Lead Time",cl:"g"},{v:"+35%",l:"Productivity",cl:"c"},{v:"−40%",l:"Floor space",cl:"o"},{v:"−99%",l:"Defects (6σ)",cl:"r"}],
+      exT:"Practical exercise — Identify the MUDA",
+      exP:"In a hospital clinic: a patient waits 45 min before consultation, the paper file is transported 3 times between departments, and the doctor repeats an anamnesis already done by the nurse.<br><strong>Question:</strong> Identify the 3 corresponding MUDA.",
+      exAns:"<strong>1. Waiting</strong> — 45 min wait with no value created.<br><strong>2. Transport</strong> — File moved 3 times unnecessarily.<br><strong>3. Over-processing</strong> — Double anamnesis is unnecessary rework.",
+    },
+    p3: {
+      eye:"Module 4 · 1:20 — 1:45 min",h:"Lean 6 Sigma",sub:"Combining waste reduction (Lean) and variability reduction (6 Sigma) for full operational excellence.",
+      vsL:{t:"Lean alone",p:"Fast but not always precise. Reduces lead time and eliminates waste. Less effective on statistical variability."},
+      vsR:{t:"Lean + 6 Sigma",p:"Fast AND precise. Lead time −25%, defects −99%. Maximum customer satisfaction and cost reduction."},
+      triT:"The Quality — Cost — Delivery triangle",triS:"Lean 6 Sigma simultaneously optimizes quality, cost and delivery — the customer satisfaction triad.",
+      lvlT:"The 3 transformation levels",
+      lvls:[
+        {t:"1. Standard Method (0% Lean)",p:"VA=5%, NVA=35%, Waste=60%. High lead time, many defects, customer dissatisfaction.",cl:"o"},
+        {t:"2. Lean-6S Improvement",p:"VA=20%, NVA=52%, Waste=28%. Lead time −25%, defect rate falling. Profitability rising.",cl:"b"},
+        {t:"3. Transformation (Evolution)",p:"VA=42%, NVA=50%, Waste=8%. Maximum competitiveness. Option to lower prices or increase margins.",cl:"g"},
+      ],
+      kpiT:"Key Lean 6 Sigma indicators",
+      kpis:[
+        ["Lead Time","Order → delivery time","Reduce by 25%+"],
+        ["Takt Time","Available time / Customer demand","Synchronize production"],
+        ["DPMO","Defects / (units × opp.) × 10⁶","< 6,210 (4σ)"],
+        ["OEE","Availability × Performance × Quality","> 85%"],
+        ["% VA","VA time / Total lead time","> 40%"],
+      ],
+      kpiH:["Indicator","Formula / Definition","Target"],
+      gaussT:"Normal Distribution — Gaussian Curve",
+      gaussSub:"Click each sigma zone to explore its characteristics",
+      gaussSliderLbl:"Current sigma level:",
+      sigmaTableH:["Level σ","DPMO","Yield","Interpretation"],
+      sigmaRows:[
+        ["1σ","691,462","30.85%","Unacceptable"],
+        ["2σ","308,538","69.15%","Poor"],
+        ["3σ","66,807","93.32%","Average"],
+        ["4σ","6,210","99.38%","Good"],
+        ["5σ","233","99.977%","Excellent"],
+        ["6σ","3.4","99.9997%","Six Sigma reference"],
+      ],
+    },
+    p4: {
+      eye:"Module 5 · 1:45 — 2:00 min",h:"Lean — A Mindset",sub:"Beyond tools: the continuous improvement culture that durably transforms an organization.",
+      kaiT:"Kaizen — continuous improvement",kaiP:"<strong>Kaizen</strong> (改善) means \"change for the better\" in Japanese. It is a mindset, a philosophy of small daily improvements rather than rare large transformations.",
+      chips:["Every employee is an actor","Daily small steps","No idea too small","Eliminate before automating"],
+      toolT:"Key Lean tools",
+      tools:[
+        {lbl:"5S",txt:"Seiri, Seiton, Seiso, Seiketsu, Shitsuke — Workplace organization and cleanliness"},
+        {lbl:"VSM",txt:"Value Stream Mapping — Map value flows to identify wastes"},
+        {lbl:"Poka-Yoke",txt:"Error-proofing devices — Make errors impossible or immediately detectable"},
+        {lbl:"Kanban",txt:"Demand-driven management — Pull flow, production on exact demand"},
+        {lbl:"SMED",txt:"Single Minute Exchange of Die — Reduce changeover times"},
+      ],
+      mindT:"The mindset in 4 attitudes",
+      mind:[
+        {t:"Think customer value",p:"Ask: does this activity create value for the customer?",cl:"g"},
+        {t:"See waste",p:"Go to the floor (Gemba Walk). Observe real flows, not theoretical ones.",cl:"b"},
+        {t:"Act collectively",p:"Involve the whole team. The best ideas come from operators.",cl:"o"},
+        {t:"Aim for perfection",p:"Improvement has no end. Every win opens new opportunities.",cl:"r"},
+      ],
+      pdcaT:"The PDCA cycle — Deming Wheel",
+      pdca:["Plan|Plan","Do|Execute","Check|Verify","Act|Adjust"],
+      pdcaS:"PDCA is the engine of continuous improvement. You never 'finish' a PDCA — you restart at a higher level.",
+    },
+    quiz: {
+      eye:"Final Assessment · 10 Questions",h:"Quiz — Test Your Knowledge",sub:"Click on the correct answer. Feedback appears immediately.",
+      qs:[
+        {q:"What does MUDA mean in Japanese?",opts:["Continuous improvement","Waste","Value added"],a:1,ex:"MUDA means Waste. MURA = Variation, MURI = Overburden."},
+        {q:"What is the WORST waste according to Taiichi Ohno?",opts:["Defects","Waiting","Overproduction"],a:2,ex:"Overproduction generates all other wastes: inventory, transport, waiting."},
+        {q:"In 5S, Seiso (3rd S) means:",opts:["Standardize","Clean","Sort"],a:1,ex:"Seiri=Sort, Seiton=Set in order, Seiso=Shine, Seiketsu=Standardize, Shitsuke=Sustain."},
+        {q:"% of time dedicated to VA in a standard process:",opts:["35–40%","Less than 10%","About 50%"],a:1,ex:"Less than 10% of time creates value. The rest is NVA or pure waste."},
+        {q:"Takt Time equals:",opts:["Machine cycle time","Available time / Customer demand","Lead time − Wait time"],a:1,ex:"Takt Time = Available time / Customer demand. Paces production to the customer rhythm."},
+        {q:"Doctor repeating an anamnesis already done by nurse: which MUDA?",opts:["Inventory","Transport","Over-processing"],a:2,ex:"Repeating already done work = Over-processing (unnecessary rework)."},
+        {q:"Lean 6 Sigma targets a lead time reduction of:",opts:["99%","25%","50%"],a:1,ex:"Lean targets −25% lead time. 6 Sigma targets −99% defects."},
+        {q:"Kaizen means:",opts:["Eliminate defects","Pull flow","Change for the better"],a:2,ex:"Kaizen (改善) = change for the better: continuous improvement through small daily steps."},
+        {q:"Value is defined by:",opts:["Quality engineers","The customer only","Senior management"],a:1,ex:"Value is defined only by the customer, not by the producer."},
+        {q:"OEE = ?",opts:["Quality + Performance + Downtime","Availability × Performance × Quality","Runtime / Total time"],a:1,ex:"OEE = Availability × Performance × Quality. Lean target: OEE > 85%."},
+      ],
+    },
+    guide: {
+      eye:"Help · Reference",h:"User Guide",sub:"Everything you need to know to navigate and get the most out of this application.",
+      sections:[
+        {h:"How to navigate",steps:[
+          {t:"Sidebar",p:"Click any module in the left sidebar to access it directly. Completed modules appear in green."},
+          {t:"Navigation buttons",p:"Use ← Previous / Next → buttons at the bottom of each page to advance in course order."},
+          {t:"Progress bar",p:"The bar at the top of the sidebar shows your overall progress through the entire course."},
+          {t:"Change language",p:"Click ع / EN / FR at the bottom of the sidebar to instantly switch the language."},
+        ]},
+        {h:"Interactive features",steps:[
+          {t:"Simulator (Module 2)",p:"Drag the VA and NVA sliders to simulate the impact of a Lean transformation on your process."},
+          {t:"Clickable MUDA cards (Module 3)",p:"Click each waste card to reveal its detailed definition and concrete examples."},
+          {t:"Practical exercise",p:"Try to answer the exercise before clicking 'Show answer' to reinforce learning."},
+          {t:"Final Quiz (Module 6)",p:"Answer 10 questions. Your score and expertise level are shown at the end."},
+        ]},
+        {h:"Course content",steps:[
+          {t:"Module 1",p:"Introduction — Lean origin, 5 principles, comparison Lean / 6 Sigma / Lean 6 Sigma."},
+          {t:"Module 2",p:"Value Added — VA, NVA, pure waste. Interactive simulator for the 3 transformation levels."},
+          {t:"Module 3",p:"7 MUDA Wastes — Transport, Inventory, Motion, Waiting, Over-processing, Overproduction, Defects."},
+          {t:"Module 4",p:"Lean 6 Sigma — Quality/Cost/Delivery triangle, 3 transformation levels, indicators (DPMO, OEE, Takt Time)."},
+          {t:"Module 5",p:"Lean Mindset — Kaizen, 5S, VSM, Poka-Yoke, Kanban, SMED, PDCA cycle."},
+          {t:"Module 6",p:"Final Quiz — 10 questions covering all modules. Score and expertise level at the end."},
+        ]},
+        {h:"Keyboard shortcuts",shortcuts:[
+          {k:"→ / N","d":"Next module"},
+          {k:"← / P","d":"Previous module"},
+          {k:"1–7","d":"Go to module n°"},
+          {k:"Ctrl+L","d":"Switch language"},
+        ]},
+      ],
+    },
+  },
+  ar: {
+    p0: {
+      eye:"الوحدة 1 · 0:00 — 0:15 دقيقة",
+      h:"ما هو اللين؟",
+      sub:"فلسفة إدارية ولدت في تويوتا، تهدف إلى القضاء على الهدر وتعظيم قيمة العميل.",
+      hero:{eye:"الوحدة 1 · مقدمة",t:"ما هو اللين؟",d:"فلسفة إدارية طورتها تويوتا في الخمسينيات (TPS)، أسسها وومساك وجونز في كتاب «الآلة التي غيرت العالم» (1990)."},
+      c1t:"الأصل",c1p:"طورته تويوتا (TPS) في الخمسينيات. وضع إطاره النظري وومساك وجونز عام 1990.",
+      c2t:"الهدف المحوري",c2p:"تقليل الهدر (MUDA) وزيادة القيمة المضافة للعميل من خلال التحسين المستمر (Kaizen).",
+      sfLbl:"المبادئ الخمسة للين — وومساك وجونز",
+      sf:["1. القيمة","2. تدفق القيمة","3. السحب","4. التدفق","5. الكمال"],
+      hb1t:"اللين وحده",hb1p:"يقلل الهدر ووقت الإنتاج. الهدف: تخفيض دورة الإنتاج بنسبة 25%.",
+      hb2t:"6 سيغما وحده",hb2p:"يقلل التباين والعيوب. الهدف: القضاء على 99% من العيوب.",
+      hb3t:"لين 6 سيغما",hb3p:"يجمع الاثنين: السرعة + الجودة. رضا العميل وتخفيض التكاليف.",
+      planTitle:"خطة الدورة — ساعتان",
+      plan:[
+        {lbl:"0:00–0:15",txt:"الوحدة 1 · مقدمة — ما هو اللين؟"},
+        {lbl:"0:15–0:45",txt:"الوحدة 2 · القيمة المضافة — VA / NVA / هدر"},
+        {lbl:"0:45–1:20",txt:"الوحدة 3 · 7 مهدرات MUDA — ثلاث عائلات من عدم الكفاءة"},
+        {lbl:"1:20–1:45",txt:"الوحدة 4 · لين 6 سيغما — تقليل وقت التسليم + القضاء على العيوب"},
+        {lbl:"1:45–2:00",txt:"الوحدة 5 · عقلية اللين (كايزن، 5S، الثقافة) + الاختبار"},
+      ],
+      chips:["120 دقيقة","5 وحدات","اختبار نهائي","تفاعلي"],
+    },
+    p1: {
+      eye:"الوحدة 2 · 0:15 — 0:45 دقيقة",h:"القيمة المضافة",sub:"فهم ما يقدّره العميل حقًا — وما لا يقدّره.",
+      defT:"التعريف: ما هي القيمة؟",defP:"القيمة يحددها <strong>العميل وحده</strong>. هي ما يكون العميل مستعدًا للدفع مقابله. كل ما عدا ذلك هو هدر محتمل يجب التخلص منه.",
+      barsT:"فئات الأنشطة الثلاث",
+      bars:[
+        {lbl:"الطريقة القياسية (0% لين)",info:"5% VA · 35% NVA · 60% هدر",va:5,nva:35,w:60},
+        {lbl:"التحسين لين-6S",info:"20% VA · 52% NVA · 28% هدر",va:20,nva:52,w:28},
+        {lbl:"التحول (التطور)",info:"42% VA · 50% NVA · 8% هدر",va:42,nva:50,w:8},
+      ],
+      leg:["قيمة مضافة (VA)","غير ذات قيمة مضافة (NVA)","هدر بحت"],
+      hb1t:"القيمة المضافة (VA)",hb1p:"أنشطة تحوّل المنتج ويدفع العميل مقابلها. مثال: التشغيل، التجميع، المعالجة الحرارية.",
+      hb2t:"غير ذات قيمة مضافة (NVA)",hb2p:"ضرورية لكن بدون قيمة مباشرة. مثال: عمليات التفتيش، النقل الداخلي، إعدادات الآلات.",
+      hb3t:"هدر بحت",hb3p:"لا تضيف قيمة. تُزال أولًا. مثال: الانتظار، الحركات غير الضرورية، الإفراط في الإنتاج.",
+      simT:"محاكي تفاعلي — اضبط عمليتك",simInfo:"الهدر: ",
+      keyT:"رقم مفتاحي",keyP:"أقل من 10% من الوقت يُخصص للقيمة المضافة في العملية القياسية. يهدف لين-6S إلى رفع هذه النسبة إلى 40–60%.",
+    },
+    p2: {
+      eye:"الوحدة 3 · 0:45 — 1:20 دقيقة",h:"7 مهدرات — MUDA",sub:"انقر على كل مهدر لاكتشاف تعريفه وأمثلة ملموسة.",
+      famT:"العائلات الثلاث لعدم الكفاءة",
+      fam:[
+        {t:"MUDA = الهدر",p:"أنشطة تستهلك الموارد دون خلق قيمة للعميل.",cl:"r"},
+        {t:"MURA = التباين",p:"عدم انتظام في تدفق الإنتاج. تناوب بين الإفراط والإفراط في القصور.",cl:"o"},
+        {t:"MURI = الإرهاق",p:"طلبات مفرطة على الأشخاص أو المعدات. تآكل مبكر.",cl:"b"},
+      ],
+      clickHint:"7 مهدرات MUDA — انقر للاستكشاف",
+      wastes:[
+        {icon:"🚚",name:"النقل",detail:"تنقل غير ضروري للقطع أو المواد. مثال: نقل المكونات عبر المصنع دون ضرورة."},
+        {icon:"📦",name:"المخزون",detail:"مخزون زائد (مواد، إنتاج جاري، منتجات نهائية). يجمد رأس المال ويخفي المشاكل."},
+        {icon:"🏃",name:"الحركة",detail:"حركات غير ضرورية للعمال. مثال: البحث عن الأدوات، الانحناء، المشي لإحضار قطعة."},
+        {icon:"⏳",name:"الانتظار",detail:"وقت انتظار (آلة، معلومات، مواد). غالبًا الأكثر وضوحًا في عمليات الخدمة."},
+        {icon:"⚙️",name:"المعالجة الزائدة",detail:"عمليات غير ضرورية لا يطلبها العميل. مثال: تلميع سطح غير مرئي، تحقق مزدوج."},
+        {icon:"🏭",name:"الإفراط في الإنتاج",detail:"إنتاج أكثر من طلب العميل. أسوأ هدر وفق أوهنو: يولد جميع المهدرات الأخرى."},
+        {icon:"❌",name:"العيوب",detail:"عدم المطابقة، الخردة، إعادة العمل. مكلف في الوقت والمواد والسمعة. يُزال من المصدر (Poka-Yoke)."},
+      ],
+      impT:"أثر القضاء على الهدر",
+      imp:[{v:"−25%",l:"Lead Time",cl:"g"},{v:"+35%",l:"الإنتاجية",cl:"c"},{v:"−40%",l:"مساحة المصنع",cl:"o"},{v:"−99%",l:"العيوب (6σ)",cl:"r"}],
+      exT:"تمرين عملي — حدد المهدرات MUDA",
+      exP:"في عيادة مستشفى: مريض ينتظر 45 دقيقة قبل الفحص، الملف الورقي ينتقل 3 مرات بين الأقسام، والطبيب يعيد أخذ التاريخ المرضي الذي أخذته الممرضة مسبقًا.<br><strong>السؤال:</strong> حدد المهدرات الثلاثة الموجودة.",
+      exAns:"<strong>1. الانتظار (Waiting)</strong> — 45 دقيقة دون قيمة.<br><strong>2. النقل (Transport)</strong> — الملف ينتقل 3 مرات دون ضرورة.<br><strong>3. المعالجة الزائدة (Over-processing)</strong> — إعادة أخذ التاريخ المرضي بلا داعٍ.",
+    },
+    p3: {
+      eye:"الوحدة 4 · 1:20 — 1:45 دقيقة",h:"لين 6 سيغما",sub:"الجمع بين تقليل الهدر (لين) وتقليل التباين (6 سيغما) لتحقيق التميز التشغيلي الكامل.",
+      vsL:{t:"اللين وحده",p:"سريع لكن ليس دائمًا دقيقًا. يقلل وقت التسليم ويزيل الهدر. أقل فاعلية في التباين الإحصائي."},
+      vsR:{t:"لين + 6 سيغما",p:"سريع ودقيق معًا. وقت التسليم −25%، عيوب −99%. أقصى رضا للعميل وتخفيض التكاليف."},
+      triT:"مثلث الجودة — التكلفة — التسليم",triS:"يحسّن لين 6 سيغما الجودة والتكلفة والتسليم في آنٍ واحد — ثالوث رضا العميل.",
+      lvlT:"مستويات التحول الثلاثة",
+      lvls:[
+        {t:"1. الطريقة القياسية (0% لين)",p:"VA=5%، NVA=35%، هدر=60%. وقت تسليم مرتفع، عيوب كثيرة، عدم رضا العميل.",cl:"o"},
+        {t:"2. تحسين لين-6S",p:"VA=20%، NVA=52%، هدر=28%. وقت التسليم −25%، تراجع العيوب. ارتفاع الربحية.",cl:"b"},
+        {t:"3. التحول (التطور)",p:"VA=42%، NVA=50%، هدر=8%. أقصى قدرة تنافسية. إمكانية خفض الأسعار أو رفع الهوامش.",cl:"g"},
+      ],
+      kpiT:"مؤشرات لين 6 سيغما الرئيسية",
+      kpis:[
+        ["Lead Time","وقت من الطلب إلى التسليم","تخفيض 25%+"],
+        ["Takt Time","الوقت المتاح / طلب العميل","مزامنة الإنتاج"],
+        ["DPMO","العيوب / (الوحدات × الفرص) × 10⁶","< 6,210 (4σ)"],
+        ["OEE","التوافر × الأداء × الجودة","> 85%"],
+        ["% VA","وقت VA / إجمالي Lead Time","> 40%"],
+      ],
+      kpiH:["المؤشر","الصيغة / التعريف","الهدف"],
+      gaussT:"التوزيع الطبيعي — منحنى غاوس",
+      gaussSub:"انقر على كل منطقة سيغما لاستكشاف خصائصها",
+      gaussSliderLbl:"مستوى سيغما الحالي:",
+      sigmaTableH:["المستوى σ","DPMO","المردود","التفسير"],
+      sigmaRows:[
+        ["1σ","691,462","30.85%","غير مقبول"],
+        ["2σ","308,538","69.15%","ضعيف"],
+        ["3σ","66,807","93.32%","متوسط"],
+        ["4σ","6,210","99.38%","جيد"],
+        ["5σ","233","99.977%","ممتاز"],
+        ["6σ","3.4","99.9997%","مرجع ستة سيغما"],
+      ],
+    },
+    p4: {
+      eye:"الوحدة 5 · 1:45 — 2:00 دقيقة",h:"اللين — عقلية",sub:"ما وراء الأدوات: ثقافة التحسين المستمر التي تحوّل المنظمة تحولًا دائمًا.",
+      kaiT:"كايزن — التحسين المستمر",kaiP:"<strong>كايزن</strong> (改善) تعني «التغيير نحو الأفضل» باليابانية. إنها عقلية وفلسفة تحسينات صغيرة يومية بدلًا من تحولات كبيرة نادرة.",
+      chips:["كل موظف مساهم","خطوات صغيرة يومية","لا فكرة صغيرة جدًا","أزل قبل أن تؤتمت"],
+      toolT:"أدوات اللين الرئيسية",
+      tools:[
+        {lbl:"5S",txt:"فرز، ترتيب، تنظيف، تقنين، استمرار — تنظيم مكان العمل والنظافة"},
+        {lbl:"VSM",txt:"خريطة تدفق القيمة — رسم تدفقات القيمة لتحديد الهدر"},
+        {lbl:"Poka-Yoke",txt:"أجهزة منع الأخطاء — جعل الأخطاء مستحيلة أو يمكن اكتشافها فورًا"},
+        {lbl:"Kanban",txt:"الإدارة بالطلب — تدفق السحب، الإنتاج بحسب الطلب الدقيق"},
+        {lbl:"SMED",txt:"تبديل القالب في دقيقة واحدة — تقليل أوقات تغيير السلسلة"},
+      ],
+      mindT:"العقلية في 4 مواقف",
+      mind:[
+        {t:"التفكير بقيمة العميل",p:"اسأل: هل يضيف هذا النشاط قيمة للعميل؟",cl:"g"},
+        {t:"رؤية الهدر",p:"اذهب إلى الميدان (Gemba Walk). راقب التدفقات الحقيقية لا النظرية.",cl:"b"},
+        {t:"العمل الجماعي",p:"أشرك كل الفريق. أفضل الأفكار تأتي من العمال.",cl:"o"},
+        {t:"السعي للكمال",p:"التحسين لا نهاية له. كل انتصار يفتح فرصًا جديدة.",cl:"r"},
+      ],
+      pdcaT:"دورة PDCA — عجلة ديمينغ",
+      pdca:["Plan|خطط","Do|نفّذ","Check|تحقق","Act|اضبط"],
+      pdcaS:"PDCA هو محرك التحسين المستمر. لا تنتهي من PDCA أبدًا — تعيد الدورة بمستوى أعلى.",
+    },
+    quiz: {
+      eye:"التقييم النهائي · 10 أسئلة",h:"اختبار — اختبر معلوماتك",sub:"انقر على الإجابة الصحيحة. يظهر التصحيح فورًا.",
+      qs:[
+        {q:"ماذا تعني كلمة MUDA باليابانية؟",opts:["التحسين المستمر","الهدر","القيمة المضافة"],a:1,ex:"MUDA تعني الهدر. MURA = التباين، MURI = الإرهاق."},
+        {q:"ما أسوأ هدر وفق تايتشي أوهنو؟",opts:["العيوب","الانتظار","الإفراط في الإنتاج"],a:2,ex:"الإفراط في الإنتاج يولد جميع المهدرات الأخرى: مخزون، نقل، انتظار."},
+        {q:"في 5S، Seiso (الـ S الثالث) يعني:",opts:["تقنين","تنظيف","ترتيب"],a:1,ex:"Seiri=فرز، Seiton=ترتيب، Seiso=تنظيف، Seiketsu=تقنين، Shitsuke=استمرار."},
+        {q:"نسبة الوقت المخصص للقيمة المضافة في العملية القياسية:",opts:["35–40%","أقل من 10%","حوالي 50%"],a:1,ex:"أقل من 10% من الوقت يخلق قيمة. الباقي NVA أو هدر بحت."},
+        {q:"Takt Time يساوي:",opts:["وقت دورة الآلة","الوقت المتاح / طلب العميل","Lead Time − وقت الانتظار"],a:1,ex:"Takt Time = الوقت المتاح / طلب العميل. يزامن الإنتاج مع إيقاع العميل."},
+        {q:"طبيب يعيد أخذ التاريخ المرضي الذي أخذته الممرضة: أي MUDA؟",opts:["المخزون","النقل","المعالجة الزائدة"],a:2,ex:"إعادة عمل تم إنجازه = معالجة زائدة (Over-processing) غير ضرورية."},
+        {q:"لين 6 سيغما يستهدف تخفيض وقت التسليم بنسبة:",opts:["99%","25%","50%"],a:1,ex:"اللين يستهدف −25% من وقت التسليم. 6 سيغما يستهدف −99% من العيوب."},
+        {q:"كايزن تعني:",opts:["القضاء على العيوب","تدفق السحب","التغيير نحو الأفضل"],a:2,ex:"كايزن (改善) = التغيير نحو الأفضل: تحسين مستمر بخطوات صغيرة يومية."},
+        {q:"القيمة يحددها:",opts:["مهندسو الجودة","العميل وحده","الإدارة العليا"],a:1,ex:"القيمة يحددها العميل وحده، وليس المنتج."},
+        {q:"OEE = ؟",opts:["الجودة + الأداء + التوقف","التوافر × الأداء × الجودة","وقت التشغيل / إجمالي الوقت"],a:1,ex:"OEE = التوافر × الأداء × الجودة. هدف اللين: OEE > 85%."},
+      ],
+    },
+    guide: {
+      eye:"مساعدة · مرجع",h:"دليل المستخدم",sub:"كل ما تحتاج معرفته للتنقل والاستفادة القصوى من هذا التطبيق.",
+      sections:[
+        {h:"كيفية التنقل",steps:[
+          {t:"الشريط الجانبي",p:"انقر على أي وحدة في الشريط الأيمن للوصول إليها مباشرة. الوحدات المكتملة تظهر باللون الأخضر."},
+          {t:"أزرار التنقل",p:"استخدم أزرار السابق / التالي في أسفل كل صفحة للتقدم بترتيب الدورة."},
+          {t:"شريط التقدم",p:"الشريط في أعلى الشريط الجانبي يوضح تقدمك الإجمالي في الدورة."},
+          {t:"تغيير اللغة",p:"انقر على ع / EN / FR في أسفل الشريط الجانبي لتغيير اللغة فورًا."},
+        ]},
+        {h:"الميزات التفاعلية",steps:[
+          {t:"المحاكي (الوحدة 2)",p:"حرّك شرائح VA وNVA لمحاكاة تأثير تحول لين على عمليتك."},
+          {t:"بطاقات MUDA القابلة للنقر (الوحدة 3)",p:"انقر على كل بطاقة هدر لعرض تعريفها التفصيلي وأمثلة ملموسة."},
+          {t:"التمرين العملي",p:"حاول الإجابة قبل النقر على 'عرض الإجابة' لتعزيز التعلم."},
+          {t:"الاختبار النهائي (الوحدة 6)",p:"أجب على 10 أسئلة. تظهر نتيجتك ومستوى خبرتك في النهاية."},
+        ]},
+        {h:"محتوى الدورة",steps:[
+          {t:"الوحدة 1",p:"مقدمة — أصل اللين، المبادئ الخمسة، المقارنة: لين / 6 سيغما / لين 6 سيغما."},
+          {t:"الوحدة 2",p:"القيمة المضافة — VA، NVA، هدر بحت. محاكي تفاعلي للمستويات الثلاثة."},
+          {t:"الوحدة 3",p:"7 مهدرات MUDA — نقل، مخزون، حركة، انتظار، معالجة زائدة، إفراط في الإنتاج، عيوب."},
+          {t:"الوحدة 4",p:"لين 6 سيغما — مثلث الجودة/التكلفة/التسليم، 3 مستويات تحول، مؤشرات (DPMO، OEE، Takt Time)."},
+          {t:"الوحدة 5",p:"عقلية اللين — كايزن، 5S، VSM، Poka-Yoke، كانبان، SMED، دورة PDCA."},
+          {t:"الوحدة 6",p:"الاختبار النهائي — 10 أسئلة تغطي جميع الوحدات. النتيجة ومستوى الخبرة في النهاية."},
+        ]},
+        {h:"اختصارات لوحة المفاتيح",shortcuts:[
+          {k:"→ / N","d":"الوحدة التالية"},
+          {k:"← / P","d":"الوحدة السابقة"},
+          {k:"1–7","d":"الانتقال للوحدة رقم"},
+          {k:"Ctrl+L","d":"تغيير اللغة"},
+        ]},
+      ],
+    },
+  }
+};
+
+/* ══════════════════════════════════════════
+   STATE
+══════════════════════════════════════════ */
+let lang = 'fr';
+let cur = 0;
+const visited = new Set([0]);
+let quizAnswered = [];
+let quizScore = 0;
+let ansVisible = false;
+
+/* ══════════════════════════════════════════
+   SPLASH
+══════════════════════════════════════════ */
+function selectLang(l) {
+  lang = l;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.lang-btn')[['ar','en','fr'].indexOf(l)].classList.add('selected');
+  const sb = document.getElementById('start-btn');
+  sb.classList.add('ready');
+  document.getElementById('start-lbl').textContent = T[l].startLbl;
+}
+
+function launchApp() {
+  document.getElementById('lang-splash').style.opacity = '0';
+  document.getElementById('lang-splash').style.transition = 'opacity 0.4s ease';
+  setTimeout(() => {
+    document.getElementById('lang-splash').style.display = 'none';
+    document.getElementById('app').classList.add('show');
+    applyLang(lang);
+    buildAll();
+  }, 400);
+}
+
+/* ══════════════════════════════════════════
+   LANGUAGE APPLICATION
+══════════════════════════════════════════ */
+function applyLang(l) {
+  lang = l;
+  const t = T[l];
+  document.documentElement.setAttribute('lang', l);
+  document.documentElement.setAttribute('dir', t.dir);
+  document.getElementById('sb-brand').textContent = 'Lean Academy';
+  document.getElementById('sb-sub').textContent = t.brandSub;
+  document.getElementById('prog-lbl-txt').textContent = t.progLbl;
+  document.querySelectorAll('.ls-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['ar','en','fr'][i] === l);
+  });
+  buildSidebar();
+  buildAll();
+  setActive(cur);
+}
+
+function switchLang(l) { applyLang(l); }
+
+/* ══════════════════════════════════════════
+   SIDEBAR
+══════════════════════════════════════════ */
+function buildSidebar() {
+  const t = T[lang];
+  const wrap = document.getElementById('sb-nav');
+  const sections = [0,1,5,6]; // indices where section labels start
+  const labels = t.navSections;
+  let secIdx = 0;
+  let html = '';
+  for (let i = 0; i < 7; i++) {
+    if (sections.includes(i)) {
+      html += `<div class="sb-section">${labels[secIdx++]}</div>`;
+    }
+    html += `<div class="sb-item" id="nav-${i}" onclick="goTo(${i})">
+      <div class="nb-dot"></div>
+      <div class="nb-body">
+        <div class="nb-title">${t.navTitles[i]}</div>
+        <div class="nb-time">${t.navTimes[i]}</div>
+      </div>
+    </div>`;
+  }
+  wrap.innerHTML = html;
+}
+
+/* ══════════════════════════════════════════
+   PAGE BUILDER
+══════════════════════════════════════════ */
+function buildAll() {
+  const wrap = document.getElementById('pages-wrap');
+  wrap.innerHTML = '';
+  for (let i = 0; i < 7; i++) {
+    const div = document.createElement('div');
+    div.className = 'page';
+    div.id = 'page-' + i;
+    div.innerHTML = buildPage(i);
+    wrap.appendChild(div);
+  }
+  document.getElementById('page-' + cur).classList.add('active');
+  updateTopbar();
+  attachSim();
+  quizAnswered = new Array(10).fill(false);
+  quizScore = 0;
+}
+
+function buildPage(i) {
+  const t = T[lang];
+  const c = CONTENT[lang];
+  const prev = i > 0 ? `<button class="btn btn-o" onclick="goTo(${i-1})">${t.prev}</button>` : `<button class="btn btn-o" disabled>${t.prev}</button>`;
+  const next = i < 6 ? (i === 4 ? `<button class="btn btn-c" onclick="goTo(${i+1})">${t.startQuiz}</button>` : `<button class="btn btn-p" onclick="goTo(${i+1})">${t.next}</button>`) : `<button class="btn btn-o" disabled>—</button>`;
+  const nf = `<div class="nf">${prev}<span class="nf-ctr">${i+1} / 7</span>${next}</div>`;
+
+  if (i === 0) return buildIntro(c.p0) + nf;
+  if (i === 1) return buildVA(c.p1) + nf;
+  if (i === 2) return buildWaste(c.p2) + nf;
+  if (i === 3) return buildLean6S(c.p3) + nf;
+  if (i === 4) return buildMindset(c.p4) + nf;
+  if (i === 5) return buildQuiz(c.quiz) + nf;
+  if (i === 6) return buildGuide(c.guide) + nf;
+}
+
+/* ── PAGE 0 : INTRO ── */
+function buildIntro(d) {
+  const chips = d.chips.map((c,i) => `<span class="chip ${['c','g','o','r'][i]}">${c}</span>`).join('');
+  const sf = d.sf.map((s,i) => `<div class="sb ${['c','g','o','r',''][i]}">${s}</div>${i<4?'<span class="sa">→</span>':''}`).join('');
+  const plan = d.plan.map(p => `<div class="tl-i"><div class="tl-lbl">${p.lbl}</div><div class="tl-txt">${p.txt}</div></div>`).join('');
+  return `
+  <div class="hero-block">
+    <div class="hero-eye">${d.hero.eye}</div>
+    <div class="hero-title">${d.hero.t}</div>
+    <div class="hero-desc">${d.hero.d}</div>
+    <div class="chips">${chips}</div>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="card-h"><span class="dot" style="background:var(--cyan)"></span>${d.c1t}</div><p>${d.c1p}</p></div>
+    <div class="card"><div class="card-h"><span class="dot" style="background:var(--green)"></span>${d.c2t}</div><p>${d.c2p}</p></div>
+  </div>
+  <div class="card"><div class="card-h"><span class="dot" style="background:var(--gold)"></span>${d.sfLbl}</div>
+    <div class="sf">${sf}</div>
+    <p style="font-size:12px;color:var(--grey);margin-top:0.5rem">${lang==='ar'?'تحدد هذه المبادئ الخمسة نهج اللين من تعريف القيمة حتى السعي المستمر للكمال.':lang==='en'?'These 5 principles define the Lean approach from value definition to the continuous pursuit of perfection.':'Ces 5 principes définissent la démarche Lean de la définition de la valeur à la quête permanente de la perfection.'}</p>
+  </div>
+  <div class="g3">
+    <div class="hb b"><div class="hb-t">${d.hb1t}</div><p>${d.hb1p}</p></div>
+    <div class="hb g"><div class="hb-t">${d.hb2t}</div><p>${d.hb2p}</p></div>
+    <div class="hb o"><div class="hb-t">${d.hb3t}</div><p>${d.hb3p}</p></div>
+  </div>
+  <div class="card"><div class="card-h"><span class="dot" style="background:var(--grey)"></span>${d.planTitle}</div>
+    <div class="tl" style="margin-top:0.5rem">${plan}</div>
+  </div>`;
+}
+
+/* ── PAGE 1 : VA ── */
+function buildVA(d) {
+  const bars = d.bars.map(b => `
+    <div class="vbar-wrap">
+      <div class="vbar-lbl"><span>${b.lbl}</span><span>${b.info}</span></div>
+      <div class="vbar-track"><div class="vb-a" style="width:${b.va}%">VA</div><div class="vb-n" style="width:${b.nva}%">NVA</div><div class="vb-w" style="width:${b.w}%">${lang==='ar'?'هدر':'Gaspi'}</div></div>
+    </div>`).join('');
+  const legs = d.leg.map((l,i) => `<div class="leg-i"><div class="leg-d" style="background:${['rgba(29,200,122,0.7)','rgba(245,166,35,0.7)','rgba(232,72,85,0.7)'][i]}"></div>${l}</div>`).join('');
+  return `
+  <div class="mod-eye">${d.eye}</div><div class="mod-h1">${d.h}</div><div class="mod-sub">${d.sub}</div>
+  <div class="card"><div class="card-h"><span class="dot"></span>${d.defT}</div><p>${d.defP}</p></div>
+  <div class="card"><div class="card-h"><span class="dot" style="background:var(--gold)"></span>${d.barsT}</div>
+    <div style="margin-top:0.75rem">${bars}</div>
+    <div class="legend">${legs}</div>
+  </div>
+  <div class="g3">
+    <div class="hb g"><div class="hb-t">${d.hb1t}</div><p>${d.hb1p}</p></div>
+    <div class="hb o"><div class="hb-t">${d.hb2t}</div><p>${d.hb2p}</p></div>
+    <div class="hb r"><div class="hb-t">${d.hb3t}</div><p>${d.hb3p}</p></div>
+  </div>
+  <div class="card"><div class="card-h"><span class="dot" style="background:var(--cyan)"></span>${d.simT}</div>
+    <div style="margin-top:0.75rem">
+      <div class="sl-row"><label class="sl-lbl">% VA</label><input type="range" min="1" max="60" value="20" id="sl-va" oninput="updateSim()"><span class="sl-val" id="sv-va">20%</span></div>
+      <div class="sl-row"><label class="sl-lbl">% NVA</label><input type="range" min="5" max="70" value="40" id="sl-nva" oninput="updateSim()"><span class="sl-val" id="sv-nva">40%</span></div>
+      <div class="vbar-track" style="height:36px;margin-top:0.75rem">
+        <div class="vb-a" id="sim-va" style="width:20%"></div>
+        <div class="vb-n" id="sim-nva" style="width:40%"></div>
+        <div class="vb-w" id="sim-waste" style="width:40%"></div>
+      </div>
+      <p style="font-size:12px;color:var(--grey);margin-top:7px" id="sim-info">${d.simInfo}40%</p>
+    </div>
+  </div>
+  <div class="hb c"><div class="hb-t">${d.keyT}</div><p>${d.keyP}</p></div>`;
+}
+
+/* ── PAGE 2 : WASTE ── */
+function buildWaste(d) {
+  const fam = d.fam.map(f => `<div class="hb ${f.cl}"><div class="hb-t">${f.t}</div><p>${f.p}</p></div>`).join('');
+  const wcs = d.wastes.map(w => `<div class="waste-card" onclick="toggleWC(this)"><div class="wc-icon">${w.icon}</div><div class="wc-name">${w.name}</div><div class="wc-detail">${w.detail}</div></div>`).join('');
+  const imp = d.imp.map(i => `<div class="stat-c"><div class="sv ${i.cl}">${i.v}</div><div class="sl">${i.l}</div></div>`).join('');
+  const showLbl = T[lang].showAnswer;
+  return `
+  <div class="mod-eye">${d.eye}</div><div class="mod-h1">${d.h}</div><div class="mod-sub">${d.sub}</div>
+  <div class="card"><div class="card-h"><span class="dot" style="background:var(--red)"></span>${d.famT}</div>
+    <div class="g3" style="margin-top:0.5rem">${fam}</div>
+  </div>
+  <div class="card"><div class="card-h"><span class="dot" style="background:var(--gold)"></span>${d.clickHint}</div>
+    <div class="waste-grid" style="margin-top:0.5rem">${wcs}</div>
+  </div>
+  <div class="card"><div class="card-h"><span class="dot" style="background:var(--green)"></span>${d.impT}</div>
+    <div class="stat-row" style="margin-top:0.25rem">${imp}</div>
+  </div>
+  <div class="ex-box">
+    <div class="ex-title">${d.exT}</div>
+    <div class="ex-body">${d.exP}</div>
+    <div style="margin-top:0.75rem">
+      <button class="btn btn-o" id="ex-btn" onclick="toggleEx()" style="font-size:12px">${showLbl}</button>
+    </div>
+    <div id="ex-ans" style="display:none;margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid rgba(245,166,35,0.2)">
+      <p style="font-size:13px;color:rgba(239,242,248,0.85);line-height:1.75">${d.exAns}</p>
+    </div>
+  </div>`;
+}
+
+/* ── PAGE 3 : LEAN 6S ── */
+function buildLean6S(d) {
+  const lvls = d.lvls.map(l => `<div class="hb ${l.cl}" style="margin-bottom:0.5rem"><div class="hb-t">${l.t}</div><p>${l.p}</p></div>`).join('');
+  const rows = d.kpis.map((k,i) => `<tr><td><strong>${k[0]}</strong></td><td>${k[1]}</td><td class="hl">${k[2]}</td></tr>`).join('');
+  const sigRows = d.sigmaRows.map((r,i) => `<tr id="str-${i}" onclick="highlightSigmaRow(${i})" style="cursor:pointer;transition:background 0.2s"><td><strong style="color:${['#7A8EA8','#2280F0','#1DC87A','#00D4F0','#F5A623','#E84855'][i]}">${r[0]}</strong></td><td>${r[1]}</td><td>${r[2]}</td><td class="hl">${r[3]}</td></tr>`).join('');
+  return `
+  <div class="mod-eye">${d.eye}</div><div class="mod-h1">${d.h}</div><div class="mod-sub">${d.sub}</div>
+  <div class="vs"><div class="vs-l"><div class="vs-h">${d.vsL.t}</div><div class="vs-b">${d.vsL.p}</div></div>
+    <div class="vs-r"><div class="vs-h">${d.vsR.t}</div><div class="vs-b">${d.vsR.p}</div></div></div>
+
+  <!-- GAUSSIAN CARD -->
+  <div class="card">
+    <div class="card-h"><span class="dot" style="background:var(--green)"></span>${d.gaussT}</div>
+    <p style="font-size:12px;color:var(--grey);margin-bottom:0.75rem">${d.gaussSub}</p>
+
+    <!-- SVG Gaussian curve -->
+    <div id="gauss-wrap" style="position:relative;background:rgba(0,0,0,0.15);border-radius:10px;padding:0.5rem 0.25rem;overflow:hidden">
+      <svg id="gauss-svg" width="100%" viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg" style="display:block">
+        <defs>
+          <clipPath id="clip-gauss"><rect x="0" y="0" width="700" height="220"/></clipPath>
+        </defs>
+
+        <!-- Zone fills (±1σ to ±6σ, drawn outermost first) -->
+        <g id="gz-5" clip-path="url(#clip-gauss)" onclick="clickSigmaZone(5)" style="cursor:pointer">
+          <path d="M50,215 C80,215 95,65 117,38 C139,13 155,9 175,8 C195,7 210,8 230,9 C250,10 265,10 280,10 C295,10 310,10 325,10 C340,10 355,10 370,10 C385,10 400,10 420,9 C440,8 455,7 475,8 C495,9 510,13 532,38 C554,65 569,215 600,215 Z" fill="rgba(232,72,85,0.06)" stroke="none"/>
+        </g>
+        <g id="gz-4" clip-path="url(#clip-gauss)" onclick="clickSigmaZone(4)" style="cursor:pointer">
+          <path d="M98,215 C108,215 118,110 133,65 C148,22 162,11 175,8 C188,5 205,6 230,9 C255,12 268,12 280,12 C292,12 308,12 325,12 C342,12 355,12 370,12 C385,12 397,12 420,9 C445,6 462,5 475,8 C488,11 502,22 517,65 C532,110 542,215 552,215 Z" fill="rgba(245,166,35,0.08)" stroke="none"/>
+        </g>
+        <g id="gz-3" clip-path="url(#clip-gauss)" onclick="clickSigmaZone(3)" style="cursor:pointer">
+          <path d="M136,215 C144,215 154,140 168,90 C182,40 194,16 210,12 C226,8 255,11 280,14 C305,17 315,17 325,17 C335,17 345,17 370,14 C395,11 424,8 440,12 C456,16 468,40 482,90 C496,140 506,215 514,215 Z" fill="rgba(0,212,240,0.08)" stroke="none"/>
+        </g>
+        <g id="gz-2" clip-path="url(#clip-gauss)" onclick="clickSigmaZone(2)" style="cursor:pointer">
+          <path d="M185,215 C193,215 204,168 218,118 C232,68 248,30 265,18 C282,6 295,8 325,11 C355,8 368,6 385,18 C402,30 418,68 432,118 C446,168 457,215 465,215 Z" fill="rgba(26,111,212,0.12)" stroke="none"/>
+        </g>
+        <g id="gz-1" clip-path="url(#clip-gauss)" onclick="clickSigmaZone(1)" style="cursor:pointer">
+          <path d="M243,215 C250,215 262,185 278,145 C294,105 308,62 325,50 C342,62 356,105 372,145 C388,185 400,215 407,215 Z" fill="rgba(29,200,122,0.2)" stroke="none"/>
+        </g>
+
+        <!-- Hover zone overlays (transparent, for click detection, innermost ±1σ special) -->
+
+        <!-- Gaussian curve itself -->
+        <path id="gauss-curve"
+          d="M50,215 C70,215 85,200 98,180 C115,152 128,115 145,85 C158,62 172,35 195,20 C210,11 240,8 265,7 C290,6 305,6 325,6 C345,6 360,6 385,7 C410,8 440,11 455,20 C478,35 492,62 505,85 C522,115 535,152 552,180 C565,200 580,215 600,215"
+          fill="none" stroke="#1DC87A" stroke-width="2.5" stroke-linecap="round"/>
+
+        <!-- Baseline -->
+        <line x1="40" y1="215" x2="660" y2="215" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+
+        <!-- Vertical dashed sigma lines -->
+        ${[[-6,50],[-5,136],[-4,185],[-3,243],[-2,280],[-1,307],[0,325],[1,343],[2,370],[3,407],[4,465],[5,514],[6,600]].map(([s,x]) => `
+          <line x1="${x}" y1="18" x2="${x}" y2="215" stroke="rgba(255,255,255,0.08)" stroke-width="0.8" stroke-dasharray="3,4"/>
+          <text x="${x}" y="230" text-anchor="middle" font-size="9.5" fill="rgba(122,142,168,0.9)" font-family="Syne,sans-serif">${s===0?'μ':s+'σ'}</text>`).join('')}
+
+        <!-- Sigma span arrows (drawn above zones) -->
+        <!-- ±1σ = 68.27% -->
+        <g id="garr-1">
+          <line x1="307" y1="46" x2="343" y2="46" stroke="#1DC87A" stroke-width="1.5" marker-start="url(#arl)" marker-end="url(#arr)"/>
+          <text x="325" y="42" text-anchor="middle" font-size="9" font-weight="700" fill="#1DC87A" font-family="Syne,sans-serif">68.27%</text>
+        </g>
+        <!-- ±2σ = 95.45% -->
+        <g id="garr-2">
+          <line x1="280" y1="58" x2="370" y2="58" stroke="#2280F0" stroke-width="1.5" marker-start="url(#arl)" marker-end="url(#arr)"/>
+          <text x="325" y="54" text-anchor="middle" font-size="9" font-weight="700" fill="#2280F0" font-family="Syne,sans-serif">95.45%</text>
+        </g>
+        <!-- ±3σ = 99.73% -->
+        <g id="garr-3">
+          <line x1="243" y1="70" x2="407" y2="70" stroke="#00D4F0" stroke-width="1.5" marker-start="url(#arl)" marker-end="url(#arr)"/>
+          <text x="325" y="66" text-anchor="middle" font-size="9" font-weight="700" fill="#00D4F0" font-family="Syne,sans-serif">99.73%</text>
+        </g>
+        <!-- ±4σ = 99.9937% -->
+        <g id="garr-4">
+          <line x1="185" y1="82" x2="465" y2="82" stroke="#F5A623" stroke-width="1.5" marker-start="url(#arl)" marker-end="url(#arr)"/>
+          <text x="325" y="78" text-anchor="middle" font-size="9" font-weight="700" fill="#F5A623" font-family="Syne,sans-serif">99.9937%</text>
+        </g>
+        <!-- ±5σ = 99.999943% -->
+        <g id="garr-5">
+          <line x1="136" y1="94" x2="514" y2="94" stroke="#E84855" stroke-width="1.5" marker-start="url(#arl)" marker-end="url(#arr)"/>
+          <text x="325" y="90" text-anchor="middle" font-size="9" font-weight="700" fill="#E84855" font-family="Syne,sans-serif">99.999943%</text>
+        </g>
+        <!-- ±6σ = 99.9999998% -->
+        <g id="garr-6">
+          <line x1="50" y1="106" x2="600" y2="106" stroke="rgba(232,72,85,0.5)" stroke-width="1.2" marker-start="url(#arl)" marker-end="url(#arr)"/>
+          <text x="325" y="102" text-anchor="middle" font-size="9" font-weight="700" fill="rgba(232,72,85,0.7)" font-family="Syne,sans-serif">99.9999998%</text>
+        </g>
+
+        <!-- μ label -->
+        <text x="325" y="230" text-anchor="middle" font-size="9.5" fill="#00D4F0" font-family="Syne,sans-serif" font-weight="700">μ</text>
+
+        <!-- Arrowhead markers -->
+        <defs>
+          <marker id="arr" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto">
+            <path d="M1 1L7 4L1 7" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+          <marker id="arl" viewBox="0 0 8 8" refX="2" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M7 1L1 4L7 7" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+        </defs>
+
+        <!-- Highlighted zone overlay (updated dynamically) -->
+        <rect id="gauss-highlight" x="0" y="0" width="0" height="0" fill="rgba(255,255,255,0.04)" rx="3"/>
+      </svg>
+
+      <!-- Tooltip -->
+      <div id="gauss-tooltip" style="display:none;position:absolute;top:8px;right:8px;background:var(--navy2);border:1px solid rgba(0,212,240,0.3);border-radius:8px;padding:8px 12px;font-size:12px;pointer-events:none;max-width:180px">
+        <div id="gtt-sigma" style="font-family:Syne,sans-serif;font-weight:800;font-size:14px;margin-bottom:3px"></div>
+        <div id="gtt-pct" style="color:var(--cyan);font-weight:600;margin-bottom:2px"></div>
+        <div id="gtt-dpmo" style="color:var(--grey);font-size:11px;margin-bottom:2px"></div>
+        <div id="gtt-interp" style="color:var(--grey);font-size:11px"></div>
+      </div>
+    </div>
+
+    <!-- Sigma slider -->
+    <div style="margin-top:1rem;padding:0 0.25rem">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:0.5rem">
+        <span style="font-size:12px;color:var(--grey);flex-shrink:0">${d.gaussSliderLbl}</span>
+        <input type="range" min="1" max="6" step="1" value="3" id="sigma-slider" oninput="updateSigmaSlider(this.value)" style="flex:1">
+        <span id="sigma-slider-val" style="font-family:Syne,sans-serif;font-weight:800;font-size:15px;color:var(--cyan);width:36px;text-align:right">3σ</span>
+      </div>
+      <!-- Sigma info bar -->
+      <div id="sigma-info-bar" style="background:rgba(0,212,240,0.08);border:1px solid rgba(0,212,240,0.2);border-radius:8px;padding:0.6rem 0.875rem;display:flex;gap:16px;flex-wrap:wrap">
+        <div><div style="font-size:10px;color:var(--grey);margin-bottom:2px">DPMO</div><div id="sib-dpmo" style="font-family:Syne,sans-serif;font-weight:800;font-size:14px;color:var(--cyan)">66 807</div></div>
+        <div><div style="font-size:10px;color:var(--grey);margin-bottom:2px">${lang==='ar'?'المردود':'Rendement'}</div><div id="sib-yield" style="font-family:Syne,sans-serif;font-weight:800;font-size:14px;color:var(--green)">93.32%</div></div>
+        <div><div style="font-size:10px;color:var(--grey);margin-bottom:2px">${lang==='ar'?'التفسير':lang==='en'?'Interpretation':'Interprétation'}</div><div id="sib-interp" style="font-family:Syne,sans-serif;font-weight:700;font-size:13px;color:var(--gold)">${d.sigmaRows[2][3]}</div></div>
+      </div>
+    </div>
+
+    <!-- Sigma comparison table -->
+    <div style="margin-top:0.875rem;overflow-x:auto">
+      <table class="ltable" id="sigma-table">
+        <thead><tr>${d.sigmaTableH.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+        <tbody>${sigRows}</tbody>
+      </table>
+    </div>
+  </div>
+  <!-- END GAUSSIAN CARD -->
+
+  <div class="card">
+    <div class="card-h"><span class="dot"></span>${d.triT}</div>
+    <div style="text-align:center;padding:0.5rem 0">
+      <svg width="100%" viewBox="0 0 360 190" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="180,18 30,170 330,170" fill="none" stroke="rgba(0,212,240,0.25)" stroke-width="1.5"/>
+        <rect x="148" y="6" width="64" height="22" rx="7" fill="rgba(0,212,240,0.13)" stroke="rgba(0,212,240,0.4)" stroke-width="0.5"/>
+        <text x="180" y="21" text-anchor="middle" font-size="11" font-weight="700" fill="#00D4F0" font-family="Syne,Noto Kufi Arabic,sans-serif">${lang==='ar'?'الجودة':'Quality'}</text>
+        <rect x="8" y="158" width="54" height="22" rx="7" fill="rgba(245,166,35,0.13)" stroke="rgba(245,166,35,0.4)" stroke-width="0.5"/>
+        <text x="35" y="173" text-anchor="middle" font-size="11" font-weight="700" fill="#F5A623" font-family="Syne,Noto Kufi Arabic,sans-serif">${lang==='ar'?'التكلفة':'Cost'}</text>
+        <rect x="298" y="158" width="56" height="22" rx="7" fill="rgba(29,200,122,0.13)" stroke="rgba(29,200,122,0.4)" stroke-width="0.5"/>
+        <text x="326" y="173" text-anchor="middle" font-size="11" font-weight="700" fill="#1DC87A" font-family="Syne,Noto Kufi Arabic,sans-serif">${lang==='ar'?'التسليم':'On Time'}</text>
+        <rect x="120" y="84" width="120" height="26" rx="7" fill="rgba(26,111,212,0.2)" stroke="rgba(26,111,212,0.45)" stroke-width="0.5"/>
+        <text x="180" y="101" text-anchor="middle" font-size="11" font-weight="700" fill="#EFF2F8" font-family="Syne,Noto Kufi Arabic,sans-serif">Lean 6 Sigma</text>
+        <text x="180" y="138" text-anchor="middle" font-size="9.5" fill="rgba(122,142,168,0.85)" font-family="DM Sans,sans-serif">${lang==='ar'?'رضا العميل + تحسين التكاليف':lang==='en'?'Customer Satisfaction & Cost Optimization':'Customer Satisfaction & Cost Optimization'}</text>
+      </svg>
+    </div>
+    <p style="font-size:12px;color:var(--grey);text-align:center">${d.triS}</p>
+  </div>
+  <div class="card"><div class="card-h"><span class="dot" style="background:var(--gold)"></span>${d.lvlT}</div>
+    <div style="margin-top:0.5rem">${lvls}</div>
+  </div>
+  <div class="card"><div class="card-h"><span class="dot" style="background:var(--grey)"></span>${d.kpiT}</div>
+    <table class="ltable"><thead><tr>${d.kpiH.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>
+  </div>`;
+}
+
+/* ── PAGE 4 : MINDSET ── */
+function buildMindset(d) {
+  const tools = d.tools.map(t => `<div class="tl-i"><div class="tl-lbl">${t.lbl}</div><div class="tl-txt">${t.txt}</div></div>`).join('');
+  const mind = d.mind.map(m => `<div class="hb ${m.cl}" style="margin-bottom:0.5rem"><div class="hb-t">${m.t}</div><p>${m.p}</p></div>`).join('');
+  const chips = d.chips.map((c,i) => `<span class="chip ${['c','g','o','r'][i]}">${c}</span>`).join('');
+  const pdca = d.pdca.map((p,i) => {
+    const [lbl,sub] = p.split('|');
+    return `<div class="sb ${['c','g','o','r'][i]}" style="text-align:center">${lbl}<br><span style="font-size:9.5px;font-weight:400;opacity:0.8">${sub}</span></div>${i<3?'<span class="sa">→</span>':'<span class="sa" style="font-size:16px">↩</span>'}`;
+  }).join('');
+  return `
+  <div class="mod-eye">${d.eye}</div><div class="mod-h1">${d.h}</div><div class="mod-sub">${d.sub}</div>
+  <div class="card"><div class="card-h"><span class="dot"></span>${d.kaiT}</div>
+    <p>${d.kaiP}</p><div class="chips" style="margin-top:0.75rem">${chips}</div>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="card-h"><span class="dot" style="background:var(--gold)"></span>${d.toolT}</div>
+      <div class="tl" style="margin-top:0.25rem">${tools}</div>
+    </div>
+    <div class="card"><div class="card-h"><span class="dot" style="background:var(--green)"></span>${d.mindT}</div>${mind}</div>
+  </div>
+  <div class="card"><div class="card-h"><span class="dot" style="background:var(--cyan)"></span>${d.pdcaT}</div>
+    <div class="sf" style="justify-content:center;margin:0.75rem 0">${pdca}</div>
+    <p style="font-size:12px;color:var(--grey);text-align:center">${d.pdcaS}</p>
+  </div>`;
+}
+
+/* ── PAGE 5 : QUIZ ── */
+function buildQuiz(d) {
+  const qs = d.qs.map((q,i) => `
+    <div class="qb">
+      <div class="q-num">Q${i+1} / 10</div>
+      <div class="q-txt">${q.q}</div>
+      <div class="q-opts" id="qo-${i}">
+        ${q.opts.map((o,j) => `<button class="q-opt" onclick="answerQ(this,${j===q.a},${i},\`${q.ex.replace(/`/g,"'")}\`)">${['A','B','C'][j]}. ${o}</button>`).join('')}
+      </div>
+      <div class="q-fb" id="qfb-${i}"></div>
+    </div>`).join('');
+  return `
+  <div class="mod-eye" style="color:var(--gold)">${d.eye}</div><div class="mod-h1">${d.h}</div><div class="mod-sub">${d.sub}</div>
+  ${qs}
+  <div class="sc-card" id="sc-card">
+    <div class="sc-big" id="sc-val">—</div>
+    <div class="sc-sub" id="sc-sub2">${T[lang].outOf}</div>
+    <div class="sc-lv" id="sc-lv">—</div>
+    <div class="stat-row" style="margin-top:1rem">
+      <div class="stat-c"><div class="sv" id="sc-pct" style="font-size:20px">—</div><div class="sl">${lang==='ar'?'النجاح':lang==='en'?'Success':'Réussite'}</div></div>
+      <div class="stat-c"><div class="sv g" id="sc-ok" style="font-size:20px">—</div><div class="sl">${lang==='ar'?'صحيحة':lang==='en'?'Correct':'Correctes'}</div></div>
+      <div class="stat-c"><div class="sv r" id="sc-ko" style="font-size:20px">—</div><div class="sl">${lang==='ar'?'خاطئة':lang==='en'?'Wrong':'Incorrectes'}</div></div>
+    </div>
+    <button class="btn btn-p" style="width:100%;margin-top:0.75rem;justify-content:center" onclick="goTo(0)">${T[lang].reviewCourse}</button>
+  </div>`;
+}
+
+/* ── PAGE 6 : GUIDE ── */
+function buildGuide(d) {
+  const secs = d.sections.map(s => {
+    let inner;
+    if (s.shortcuts) {
+      const items = s.shortcuts.map(sc => `<div class="sc-item"><span class="sc-key">${sc.k}</span><span class="sc-desc">${sc.d}</span></div>`).join('');
+      inner = `<div class="shortcut-grid">${items}</div>`;
+    } else {
+      inner = s.steps.map((st,i) => `<div class="guide-step">
+        <div class="gs-num">${i+1}</div>
+        <div class="gs-body"><div class="gs-title">${st.t}</div><p>${st.p}</p></div>
+      </div>`).join('');
+    }
+    return `<div class="guide-section"><div class="guide-h2">${s.h}</div>${inner}</div>`;
+  }).join('');
+  return `
+  <div class="mod-eye">${d.eye}</div><div class="mod-h1">${d.h}</div><div class="mod-sub">${d.sub}</div>
+  <div class="card">${secs}</div>`;
+}
+
+/* ══════════════════════════════════════════
+   INTERACTIONS
+══════════════════════════════════════════ */
+function attachSim() {
+  // will be available after DOM build
+}
+
+function updateSim() {
+  const va = parseInt(document.getElementById('sl-va').value);
+  const nva = parseInt(document.getElementById('sl-nva').value);
+  const waste = Math.max(0, 100 - va - nva);
+  const tot = va + nva + waste;
+  document.getElementById('sv-va').textContent = va + '%';
+  document.getElementById('sv-nva').textContent = nva + '%';
+  document.getElementById('sim-va').style.width = (va/tot*100).toFixed(0) + '%';
+  document.getElementById('sim-nva').style.width = (nva/tot*100).toFixed(0) + '%';
+  document.getElementById('sim-waste').style.width = (waste/tot*100).toFixed(0) + '%';
+  const prefix = CONTENT[lang].p1.simInfo;
+  let msg = prefix + waste + '%';
+  if (waste > 50) msg += lang==='ar'?' — إمكانية تحسين عالية جدًا!':lang==='en'?' — Very high improvement potential!':' — Potentiel d\'amélioration très élevé !';
+  else if (waste > 25) msg += lang==='ar'?' — لا يزال هناك هامش للتحسن.':lang==='en'?' — Still room to improve.':' — Encore des marges de progrès.';
+  else msg += lang==='ar'?' — مستوى ممتاز!':lang==='en'?' — Excellent Lean level! 🏆':' — Excellent niveau Lean ! 🏆';
+  document.getElementById('sim-info').textContent = msg;
+}
+
+function toggleWC(el) {
+  const was = el.classList.contains('sel');
+  document.querySelectorAll('.waste-card').forEach(c => c.classList.remove('sel'));
+  if (!was) el.classList.add('sel');
+}
+
+function toggleEx() {
+  const el = document.getElementById('ex-ans');
+  const btn = document.getElementById('ex-btn');
+  const show = el.style.display === 'none';
+  el.style.display = show ? 'block' : 'none';
+  btn.textContent = show ? T[lang].hideAnswer : T[lang].showAnswer;
+}
+
+function answerQ(btn, correct, idx, explanation) {
+  if (quizAnswered[idx]) return;
+  quizAnswered[idx] = true;
+  if (correct) quizScore++;
+  document.querySelectorAll(`#qo-${idx} .q-opt`).forEach(o => o.disabled = true);
+  btn.classList.add(correct ? 'ok' : 'ko');
+  const fb = document.getElementById('qfb-' + idx);
+  fb.textContent = (correct ? T[lang].correct : T[lang].incorrect) + explanation;
+  fb.className = 'q-fb show ' + (correct ? 'ok' : 'ko');
+  if (quizAnswered.filter(Boolean).length === 10) showScore();
+}
+
+function showScore() {
+  const card = document.getElementById('sc-card');
+  card.classList.add('show');
+  document.getElementById('sc-val').textContent = quizScore + T[lang].scoreOf;
+  document.getElementById('sc-pct').textContent = (quizScore * 10) + '%';
+  document.getElementById('sc-ok').textContent = quizScore;
+  document.getElementById('sc-ko').textContent = 10 - quizScore;
+  const lvls = T[lang].scores;
+  const lv = lvls.find(l => quizScore >= l.min);
+  const el = document.getElementById('sc-lv');
+  el.textContent = lv.lbl;
+  el.style.color = lv.col;
+  card.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+/* ══════════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════════ */
+function goTo(n) {
+  const old = document.getElementById('page-' + cur);
+  if (old) old.classList.remove('active');
+  const oNav = document.getElementById('nav-' + cur);
+  if (oNav) { oNav.classList.remove('active'); if (cur !== n) oNav.classList.add('done'); }
+  cur = n;
+  visited.add(n);
+  const newPage = document.getElementById('page-' + n);
+  if (newPage) newPage.classList.add('active');
+  setActive(n);
+  document.querySelector('.main-content').scrollTo({top:0, behavior:'smooth'});
+  document.getElementById('sidebar').classList.remove('open');
+  // reset quiz state if navigating away and back
+  if (n === 5) { quizAnswered = new Array(10).fill(false); quizScore = 0; }
+}
+
+function setActive(n) {
+  const nNav = document.getElementById('nav-' + n);
+  if (nNav) { nNav.classList.remove('done'); nNav.classList.add('active'); }
+  const pct = Math.round((visited.size / 7) * 100);
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.getElementById('sb-ft') && (document.getElementById('sb-ft').textContent = T[lang].modLabel + ' ' + (n+1) + '/7');
+  updateTopbar();
+}
+
+function updateTopbar() {
+  document.getElementById('tb-title').textContent = T[lang].tbTitles[cur];
+  document.getElementById('tb-mod').textContent = T[lang].modLabel + ' ' + (cur+1) + '/7';
+}
+
+/* ══════════════════════════════════════════
+   KEYBOARD
+══════════════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  if (document.getElementById('lang-splash').style.display !== 'none') return;
+  if (e.key === 'ArrowRight' || e.key === 'n' || e.key === 'N') { if (cur < 6) goTo(cur+1); }
+  if (e.key === 'ArrowLeft'  || e.key === 'p' || e.key === 'P') { if (cur > 0) goTo(cur-1); }
+  if (e.key >= '1' && e.key <= '7') goTo(parseInt(e.key)-1);
+  if (e.ctrlKey && e.key === 'l') { const langs=['ar','en','fr']; switchLang(langs[(langs.indexOf(lang)+1)%3]); }
+});
+
+/* ══════════════════════════════════════════
+   GAUSSIAN INTERACTIONS
+══════════════════════════════════════════ */
+const SIGMA_DATA = [
+  {sigma:"±1σ", pct:"68.27%",  dpmo:"691 462", yield:"30.85%",  color:"#1DC87A", xL:307, xR:343},
+  {sigma:"±2σ", pct:"95.45%",  dpmo:"308 538", yield:"69.15%",  color:"#2280F0", xL:280, xR:370},
+  {sigma:"±3σ", pct:"99.73%",  dpmo:"66 807",  yield:"93.32%",  color:"#00D4F0", xL:243, xR:407},
+  {sigma:"±4σ", pct:"99.9937%",dpmo:"6 210",   yield:"99.38%",  color:"#F5A623", xL:185, xR:465},
+  {sigma:"±5σ", pct:"99.999943%",dpmo:"233",   yield:"99.977%", color:"#E84855", xL:136, xR:514},
+  {sigma:"±6σ", pct:"99.9999998%",dpmo:"3.4",  yield:"99.9997%",color:"rgba(232,72,85,0.7)", xL:50, xR:600},
+];
+
+const SIGMA_DPMO_VALS  = ["691 462","308 538","66 807","6 210","233","3.4"];
+const SIGMA_YIELD_VALS = ["30.85%","69.15%","93.32%","99.38%","99.977%","99.9997%"];
+const SIGMA_COLORS     = ["#1DC87A","#2280F0","#00D4F0","#F5A623","#E84855","#E84855"];
+
+let activeZone = 2; // default: 3σ
+
+function clickSigmaZone(idx) {
+  // idx = 0..4 corresponds to ±1σ..±5σ zones (gz-1 to gz-5)
+  // zone id in SVG: gz-1 = ±1σ (idx=0), gz-5 = ±5σ (idx=4)
+  const realIdx = idx; // 1-based zone matches sigma level index (idx 0=1σ, 1=2σ, etc.)
+  highlightZone(idx);
+  // sync slider
+  const sl = document.getElementById('sigma-slider');
+  if (sl) { sl.value = idx + 1; updateSigmaSlider(idx + 1); }
+}
+
+function highlightZone(idx) {
+  // idx 0-5 = sigma 1-6
+  activeZone = idx;
+  const d = SIGMA_DATA[idx];
+  const tt = document.getElementById('gauss-tooltip');
+  if (!tt) return;
+
+  // Update tooltip
+  document.getElementById('gtt-sigma').textContent = d.sigma;
+  document.getElementById('gtt-sigma').style.color = d.color;
+  document.getElementById('gtt-pct').textContent = d.pct;
+  const c = CONTENT[lang].p3;
+  document.getElementById('gtt-dpmo').textContent = 'DPMO: ' + d.dpmo;
+  document.getElementById('gtt-interp').textContent = c.sigmaRows[idx][3];
+  tt.style.display = 'block';
+
+  // Update curve color to match selected zone
+  const curve = document.getElementById('gauss-curve');
+  if (curve) curve.style.stroke = d.color;
+
+  // Highlight row in table
+  highlightSigmaRow(idx);
+
+  // Update info bar
+  updateInfoBar(idx);
+}
+
+function highlightSigmaRow(idx) {
+  for (let i = 0; i < 6; i++) {
+    const row = document.getElementById('str-' + i);
+    if (!row) continue;
+    row.style.background = i === idx ? 'rgba(0,212,240,0.08)' : '';
+    row.style.borderLeft = i === idx ? '3px solid ' + SIGMA_COLORS[idx] : '';
+  }
+}
+
+function updateSigmaSlider(val) {
+  const idx = parseInt(val) - 1;
+  const slVal = document.getElementById('sigma-slider-val');
+  if (slVal) slVal.textContent = val + 'σ';
+  highlightZone(idx);
+  // animate the corresponding arrow by briefly increasing opacity
+  for (let i = 1; i <= 6; i++) {
+    const g = document.getElementById('garr-' + i);
+    if (!g) continue;
+    g.style.opacity = i === parseInt(val) ? '1' : '0.35';
+  }
+  // animate zone fills
+  for (let i = 1; i <= 5; i++) {
+    const z = document.getElementById('gz-' + i);
+    if (!z) continue;
+    z.style.opacity = i <= parseInt(val) ? '1' : '0.3';
+  }
+}
+
+function updateInfoBar(idx) {
+  const c = CONTENT[lang].p3;
+  const dpmoEl = document.getElementById('sib-dpmo');
+  const yldEl  = document.getElementById('sib-yield');
+  const intEl  = document.getElementById('sib-interp');
+  if (!dpmoEl) return;
+  dpmoEl.textContent  = c.sigmaRows[idx][1];
+  dpmoEl.style.color  = SIGMA_COLORS[idx];
+  yldEl.textContent   = c.sigmaRows[idx][2];
+  yldEl.style.color   = SIGMA_COLORS[idx];
+  intEl.textContent   = c.sigmaRows[idx][3];
+  intEl.style.color   = SIGMA_COLORS[idx];
+}
+
+// Initialize gaussian after build (called when page 3 is shown)
+const origGoTo = goTo;
+</script>
+</body>
+</html>
